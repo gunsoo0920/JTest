@@ -1,0 +1,19 @@
+FROM eclipse-temurin:21-jdk-jammy AS build
+
+WORKDIR /workspace
+
+COPY gradlew gradlew
+COPY gradle gradle
+COPY build.gradle.kts settings.gradle.kts ./
+COPY src src
+
+RUN chmod +x gradlew
+RUN ./gradlew --no-daemon bootJar -x test
+
+FROM eclipse-temurin:21-jre-jammy
+
+WORKDIR /app
+COPY --from=build /workspace/build/libs/*.jar app.jar
+
+EXPOSE 9090
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

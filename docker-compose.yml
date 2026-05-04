@@ -1,0 +1,53 @@
+services:
+  db:
+    image: mariadb:12.0.2
+    container_name: ang-db
+    environment:
+      MARIADB_DATABASE: ang_db
+      MARIADB_ROOT_PASSWORD: ang1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: ang-backend
+    ports:
+      - "9090:9090"
+    environment:
+      DB_URL: jdbc:mariadb://db:3306/ang_db?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      DB_USERNAME: root
+      DB_PASSWORD: ang1234
+      JWT_SECRET: change-this-secret-value-at-least-32-bytes-long
+      ADMIN_INIT_PASSWORD: admin1234
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: llama3.2
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: ang-frontend
+    ports:
+      - "5500:80"
+    depends_on:
+      - backend
+
+  ai:
+    build:
+      context: ./AI
+      dockerfile: Dockerfile
+    container_name: ang-ai
+    ports:
+      - "8888:8888"
+    environment:
+      OLLAMA_MODEL: llama3.2
+      OLLAMA_HOST: http://host.docker.internal:11434
+
+volumes:
+  mariadb_data:
