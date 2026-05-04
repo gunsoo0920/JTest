@@ -70,7 +70,7 @@ uvicorn main:app --reload --port 8888
 ```
 사용자
   ↓ 브라우저에서 클릭
-Frontend (5173)
+Frontend (5500)
   ↓ /api 요청 → Vite 프록시
 Backend (9090)
   ↓ AI 기능 필요할 때
@@ -112,6 +112,111 @@ Backend/src/main/java/com/ang/Backend/
 4. `service/` → 기능 로직 작성
 5. `Controller/` → API 엔드포인트 연결
 6. `DTO/` → 데이터 형식 정의
+
+---
+
+## 프론트엔드 구조
+
+```
+Frontend/src/
+├── assets/          ← 이미지, 폰트 등 정적 파일
+├── components/
+│   └── common/      ← 여러 페이지에서 재사용하는 UI (Button, Modal 등)
+├── hooks/           ← 커스텀 훅 (useXxx.js)
+├── pages/           ← 라우트별 페이지 컴포넌트
+│   ├── Home/
+│   │   └── Home.jsx
+│   └── NotFound/
+│       └── NotFound.jsx
+├── router/
+│   └── index.jsx    ← 페이지 경로(URL) 설정
+├── services/
+│   └── api.js       ← 백엔드 API 호출 함수
+├── store/
+│   └── index.js     ← 전역 상태 (Zustand)
+├── styles/
+│   └── global.css   ← 전체 공통 스타일
+├── utils/           ← 날짜 포맷, 유효성 검사 등 공통 함수
+├── App.jsx
+└── main.jsx
+```
+
+### 페이지 추가 방법
+
+**1. 페이지 파일 생성** `src/pages/Board/Board.jsx`
+
+```jsx
+function Board() {
+  return <div>게시판 페이지</div>
+}
+
+export default Board
+```
+
+**2. 라우터에 경로 등록** `src/router/index.jsx`
+
+```jsx
+import Board from '../pages/Board/Board'
+
+const router = createBrowserRouter([
+  { path: '/',      element: <Home /> },
+  { path: '/board', element: <Board /> },  // 추가
+  { path: '*',      element: <NotFound /> },
+])
+```
+
+---
+
+### 전역 상태 사용 방법 (Zustand)
+
+**상태 추가** `src/store/index.js`
+
+```js
+const useAppStore = create((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+  clearUser: () => set({ user: null }),
+
+  // 상태 추가 예시
+  count: 0,
+  increment: () => set((state) => ({ count: state.count + 1 })),
+}))
+```
+
+**컴포넌트에서 사용**
+
+```jsx
+import useAppStore from '../../store'
+
+function MyComponent() {
+  const { user, setUser } = useAppStore()
+
+  return <div>{user ? user.name : '로그인 필요'}</div>
+}
+```
+
+---
+
+### API 호출 방법
+
+`src/services/api.js`의 `api` 객체를 사용합니다.  
+모든 요청은 Vite 프록시를 통해 백엔드(9090)로 전달됩니다.
+
+```js
+import { api } from '../../services/api'
+
+// GET
+const data = await api.get('/health')
+
+// POST
+const result = await api.post('/users/login', { email, password })
+
+// PUT
+await api.put('/users/1', { name: '홍길동' })
+
+// DELETE
+await api.delete('/users/1')
+```
 
 ---
 
