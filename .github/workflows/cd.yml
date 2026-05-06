@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev-server
+      - dev
 
 jobs:
   deploy:
