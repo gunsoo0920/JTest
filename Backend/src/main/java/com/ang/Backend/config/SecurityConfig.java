@@ -2,10 +2,7 @@ package com.ang.Backend.config;
 
 import com.ang.Backend.security.JwtAuthenticationFilter;
 import com.ang.Backend.security.JwtTokenProvider;
-<<<<<<< HEAD
 import jakarta.servlet.DispatcherType;
-=======
->>>>>>> 1e66b94ef8ba19891f7021b17f136bb539332c7c
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,22 +29,11 @@ import java.util.stream.Stream;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final List<String> allowedOriginPatterns;
-
-    public SecurityConfig(
-            JwtTokenProvider jwtTokenProvider,
-            @Value("${cors.allowed-origin-patterns}") List<String> allowedOriginPatterns
-    ) {
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.allowedOriginPatterns = allowedOriginPatterns;
-    }
 
     @Value("${CORS_ALLOWED_ORIGIN_PATTERNS:${cors.allowed-origin-patterns:*}}")
     private String allowedOrigins;
 
-    public SecurityConfig(
-            JwtTokenProvider jwtTokenProvider
-    ) {
+    public SecurityConfig(JwtTokenProvider jwtTokenProvider) {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
@@ -94,16 +80,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-<<<<<<< HEAD
         List<String> originPatterns = Stream.of(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isBlank())
                 .toList();
 
         config.setAllowedOriginPatterns(originPatterns.isEmpty() ? List.of("*") : originPatterns);
-=======
-        config.setAllowedOriginPatterns(allowedOriginPatterns);
->>>>>>> 1e66b94ef8ba19891f7021b17f136bb539332c7c
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
