@@ -12,6 +12,7 @@ import Mail from './pages/Mail'
 import Chat from './pages/Chat'
 import Organization from './pages/Organization'
 import MyPage from './pages/MyPage'
+import FloatingMascot from './FloatingMascot'
 
 const PAGE_COMPONENTS = {
   home: Home,
@@ -103,6 +104,7 @@ export default function Dashboard() {
           {renderPage()}
         </div>
       </div>
+      <FloatingMascot mode={currentPage === 'document-AI' ? 'ai' : 'default'} />
     </div>
   )
 }
