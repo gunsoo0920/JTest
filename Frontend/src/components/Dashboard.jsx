@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getMyInfo } from '../api/userApi'
 import TopNavBar from './TopNavBar'
 import Sidebar, { SIDEBAR_MENUS } from './Sidebar'
 import Home from './pages/Home'
@@ -45,7 +46,27 @@ export default function Dashboard() {
       navigate('/login')
       return
     }
+
     setUser(JSON.parse(savedUser))
+
+    const refreshUser = async () => {
+      try {
+        const response = await getMyInfo()
+        const freshUser = response.data?.data
+        if (freshUser) {
+          localStorage.setItem('user', JSON.stringify(freshUser))
+          setUser(freshUser)
+        }
+      } catch (error) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          localStorage.removeItem('user')
+          localStorage.removeItem('token')
+          navigate('/login')
+        }
+      }
+    }
+
+    refreshUser()
   }, [navigate])
 
   const handleLogout = () => {

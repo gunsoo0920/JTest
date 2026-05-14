@@ -46,6 +46,13 @@ public class UserService {
         return toDto(user);
     }
 
+    @Transactional(readOnly = true)
+    public UserDto getUserByEmpNo(String empNo) {
+        User user = userRepository.findByEmpNo(empNo)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return toDto(user);
+    }
+
     @Transactional
     public UserDto updateUser(Integer userId, UserUpdateRequest req) {
         User user = userRepository.findById(userId)
