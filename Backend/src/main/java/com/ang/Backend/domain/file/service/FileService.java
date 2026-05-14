@@ -103,6 +103,11 @@ public class FileService {
 
     @Transactional
     public FileItem storeFile(MultipartFile file, User uploader) throws IOException {
+        return storeFile(file, uploader, null);
+    }
+
+    @Transactional
+    public FileItem storeFile(MultipartFile file, User uploader, String subPath) throws IOException {
         if (file.isEmpty()) return null;
 
         String originalFilename = file.getOriginalFilename();

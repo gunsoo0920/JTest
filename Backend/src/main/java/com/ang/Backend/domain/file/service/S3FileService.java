@@ -27,34 +27,24 @@ public class S3FileService {
 
     public String upload(MultipartFile file) {
         String originalName = file.getOriginalFilename();
-
         String ext = "";
 
         if (originalName != null && originalName.contains(".")) {
             ext = originalName.substring(originalName.lastIndexOf("."));
         }
 
-        String key =
-                "uploads/"
-                        + LocalDate.now()
-                        + "/"
-                        + UUID.randomUUID()
-                        + ext;
+        String key = "uploads/" + LocalDate.now() + "/" + UUID.randomUUID() + ext;
 
         try {
-            PutObjectRequest request =
-                    PutObjectRequest.builder()
-                            .bucket(bucket)
-                            .key(key)
-                            .contentType(file.getContentType())
-                            .build();
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(file.getContentType())
+                    .build();
 
             s3Client.putObject(
                     request,
-                    RequestBody.fromInputStream(
-                            file.getInputStream(),
-                            file.getSize()
-                    )
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
             );
 
             return key;

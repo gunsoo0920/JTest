@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import api from '../../api/axios'
+import { getDepartmentDocuments, getMyDocuments } from '../../api/documentApi'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 const fileStreamUrl = (fileId) => `${API_BASE_URL}/files/stream/${fileId}`
@@ -17,45 +18,51 @@ export default function DocumentWriter() {
   const [aiLoading, setAiLoading] = useState(false)
   const [attachedDocs, setAttachedDocs] = useState([])
   const [isUploading, setIsUploading] = useState(false)
-  const [docFilter, setDocFilter] = useState('all')
-  const [showDocSelector, setShowDocSelector] = useState(false)
   const [previewError, setPreviewError] = useState(false)
+  const [category, setCategory] = useState('my')
+  const [myScopes, setMyScopes] = useState([])
+  const [selectedScopeId, setSelectedScopeId] = useState('all')
   const fileInputRef = useRef(null)
 
   useEffect(() => {
-    fetchDocuments()
+    const fetchScopes = async () => {
+      try {
+        const res = await api.get('/scopes/my')
+        setMyScopes(res.data?.data || [])
+      } catch (err) {
+        console.error('소속 부서 로드 실패', err)
+      }
+    }
+
+    fetchScopes()
   }, [])
 
   useEffect(() => {
-    const filtered = documents.filter(doc => {
-      const matchesSearch =
-        doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.originalContent?.toLowerCase().includes(searchTerm.toLowerCase())
+    fetchDocuments()
+  }, [category, selectedScopeId])
 
-      const matchesFilter =
-        docFilter === 'all' ||
-        (docFilter === 'server' && doc.source === 'server') ||
-        (docFilter === 'uploaded' && doc.source === 'uploaded')
-
-      return matchesSearch && matchesFilter
-    })
+  useEffect(() => {
+    const term = searchTerm.toLowerCase()
+    const filtered = documents.filter(doc =>
+      doc.title?.toLowerCase().includes(term) ||
+      doc.originalContent?.toLowerCase().includes(term)
+    )
     setFilteredDocuments(filtered)
-  }, [searchTerm, documents, docFilter])
+  }, [searchTerm, documents])
 
   const fetchDocuments = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/documents')
-      const docs = (response.data?.data || []).map(doc => ({
-        ...doc,
-        source: doc.source || 'server'
-      }))
-      setDocuments(docs)
+      const response = category === 'my'
+        ? await getMyDocuments()
+        : await getDepartmentDocuments(null, selectedScopeId === 'all' ? null : selectedScopeId)
+
+      setDocuments(response.data?.data || [])
       setError(null)
     } catch (err) {
       console.error('문서 목록 조회 실패:', err)
-      setDocuments([])
       setError('문서 목록을 불러올 수 없습니다.')
+      setDocuments([])
     } finally {
       setLoading(false)
     }
@@ -71,6 +78,10 @@ export default function DocumentWriter() {
       formData.append('title', file.name)
       formData.append('file', file)
 
+      if (category === 'dept' && selectedScopeId !== 'all') {
+        formData.append('targetScopeId', selectedScopeId)
+      }
+
       window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
         detail: { message: '파일을 업로드 중입니다...' }
       }))
@@ -80,10 +91,10 @@ export default function DocumentWriter() {
       if (response.data.success) {
         const docId = response.data.data
         const detailResponse = await api.get(`/documents/${docId}`)
-        const newDoc = detailResponse.data.data
-        newDoc.source = 'uploaded'
-        setDocuments([newDoc, ...documents])
+        const newDoc = { ...detailResponse.data.data, source: 'uploaded' }
+        setDocuments(prev => [newDoc, ...prev])
         setSelectedDoc(newDoc)
+        setPreviewError(false)
         window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
           detail: { message: '파일이 업로드되었어요!' }
         }))
@@ -113,21 +124,12 @@ export default function DocumentWriter() {
 
   const handleAddToPrompt = () => {
     if (selectedDoc && !attachedDocs.some(d => d.docId === selectedDoc.docId)) {
-      setAttachedDocs([...attachedDocs, selectedDoc])
-    }
-  }
-
-  const handleAttachDocument = (doc) => {
-    const isAttached = attachedDocs.some(d => d.docId === doc.docId)
-    if (isAttached) {
-      setAttachedDocs(attachedDocs.filter(d => d.docId !== doc.docId))
-    } else {
-      setAttachedDocs([...attachedDocs, doc])
+      setAttachedDocs(prev => [...prev, selectedDoc])
     }
   }
 
   const handleRemoveAttachedDoc = (docId) => {
-    setAttachedDocs(attachedDocs.filter(d => d.docId !== docId))
+    setAttachedDocs(prev => prev.filter(d => d.docId !== docId))
   }
 
   const handleAiGenerate = async () => {
@@ -139,24 +141,25 @@ export default function DocumentWriter() {
     try {
       setAiLoading(true)
       window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
-        detail: { message: '문서 읽는 중... 잠시만 기다려주세요.' }
+        detail: { message: '문서 생성 중... 잠시만 기다려주세요.' }
       }))
 
-      const payload = {
-        prompt: prompt,
+      const response = await api.post('/documents/ai-generate', {
+        prompt,
         attachedDocIds: attachedDocs.map(d => d.docId),
-        attachedDocs: attachedDocs.length > 0 ? attachedDocs.map(d => ({
+        attachedDocs: attachedDocs.map(d => ({
           docId: d.docId,
           title: d.title,
           content: d.originalContent
-        })) : null
-      }
-
-      const response = await api.post('/documents/ai-generate', payload)
+        }))
+      })
 
       if (response.data.success) {
-        setDocuments([response.data.data, ...documents])
+        if (category === 'my') {
+          setDocuments(prev => [response.data.data, ...prev])
+        }
         setSelectedDoc(response.data.data)
+        setPreviewError(false)
         setPrompt('')
         setAttachedDocs([])
         window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
@@ -166,43 +169,118 @@ export default function DocumentWriter() {
       }
     } catch (err) {
       console.error('AI 문서 생성 실패:', err)
-      window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
-        detail: { message: 'AI 문서 생성에 실패했어요. 연결 상태를 확인해주세요.' }
-      }))
       alert(err.response?.data?.message || 'AI 문서 생성에 실패했습니다.')
     } finally {
       setAiLoading(false)
     }
   }
 
+  const renderDocumentBody = () => {
+    if (!selectedDoc.fileId) {
+      return selectedDoc.originalContent?.trim() || '내용이 없습니다.'
+    }
+
+    const contentType = selectedDoc.fileContentType || ''
+
+    if (contentType.startsWith('image/')) {
+      return (
+        <img
+          src={fileStreamUrl(selectedDoc.fileId)}
+          alt={selectedDoc.title}
+          onError={() => setPreviewError(true)}
+          style={{ maxWidth: '100%' }}
+        />
+      )
+    }
+
+    if (contentType.includes('pdf')) {
+      if (previewError) {
+        return renderPreviewFallback()
+      }
+
+      return (
+        <iframe
+          src={fileStreamUrl(selectedDoc.fileId)}
+          title={selectedDoc.title}
+          onError={() => setPreviewError(true)}
+          style={{ width: '100%', height: '600px', border: 'none' }}
+        />
+      )
+    }
+
+    if (previewError) {
+      return renderPreviewFallback()
+    }
+
+    return (
+      <iframe
+        src={filePreviewUrl(selectedDoc.fileId)}
+        title={selectedDoc.title}
+        onError={() => setPreviewError(true)}
+        style={{ width: '100%', height: '600px', border: 'none' }}
+      />
+    )
+  }
+
+  const renderPreviewFallback = () => (
+    <div>
+      <p>미리보기를 불러올 수 없습니다.</p>
+      <a href={fileDownloadUrl(selectedDoc.fileId)} target="_blank" rel="noopener noreferrer">파일 다운로드</a>
+    </div>
+  )
+
   return (
     <div className="document-writer-container">
       <div className="document-sidebar">
         <div className="sidebar-header">
           <h3>문서 목록</h3>
-          <div className="doc-filter-buttons">
+          <div className="category-tabs" style={{ display: 'flex', marginTop: 10, borderBottom: '1px solid #eee' }}>
             <button
-              className={`filter-btn ${docFilter === 'all' ? 'active' : ''}`}
-              onClick={() => setDocFilter('all')}
-              title="모든 문서"
+              onClick={() => setCategory('my')}
+              style={{
+                flex: 1,
+                padding: '8px 0',
+                border: 'none',
+                background: 'none',
+                borderBottom: category === 'my' ? '2px solid #4A90D9' : 'none',
+                color: category === 'my' ? '#4A90D9' : '#888',
+                cursor: 'pointer',
+                fontWeight: category === 'my' ? 'bold' : 'normal'
+              }}
             >
-              전체
+              내 문서
             </button>
             <button
-              className={`filter-btn ${docFilter === 'server' ? 'active' : ''}`}
-              onClick={() => setDocFilter('server')}
-              title="서버 문서"
+              onClick={() => setCategory('dept')}
+              style={{
+                flex: 1,
+                padding: '8px 0',
+                border: 'none',
+                background: 'none',
+                borderBottom: category === 'dept' ? '2px solid #4A90D9' : 'none',
+                color: category === 'dept' ? '#4A90D9' : '#888',
+                cursor: 'pointer',
+                fontWeight: category === 'dept' ? 'bold' : 'normal'
+              }}
             >
-              서버
-            </button>
-            <button
-              className={`filter-btn ${docFilter === 'uploaded' ? 'active' : ''}`}
-              onClick={() => setDocFilter('uploaded')}
-              title="내가 추가한 파일"
-            >
-              내가 추가
+              부서 문서
             </button>
           </div>
+
+          {category === 'dept' && myScopes.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <select
+                value={selectedScopeId}
+                onChange={(e) => setSelectedScopeId(e.target.value)}
+                style={{ width: '100%', padding: '6px', borderRadius: 4, border: '1px solid #ddd', fontSize: 13 }}
+              >
+                <option value="all">전체 부서 문서보기</option>
+                {myScopes.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="search-container">
@@ -213,10 +291,6 @@ export default function DocumentWriter() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
-          <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-          </svg>
         </div>
 
         <div className="document-list">
@@ -235,7 +309,14 @@ export default function DocumentWriter() {
                 className={`document-item ${selectedDoc?.docId === doc.docId ? 'active' : ''}`}
                 onClick={() => handleSelectDocument(doc)}
               >
-                <div className="doc-title">{doc.title}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div className="doc-title">{doc.title}</div>
+                  {category === 'dept' && doc.scopeName && (
+                    <span style={{ fontSize: 10, background: '#f0f0f0', padding: '2px 4px', borderRadius: 4, color: '#666', marginLeft: 4 }}>
+                      {doc.scopeName}
+                    </span>
+                  )}
+                </div>
                 <div className="doc-date">
                   {new Date(doc.createdAt).toLocaleDateString('ko-KR')}
                 </div>
@@ -261,73 +342,26 @@ export default function DocumentWriter() {
             type="file"
             onChange={handleFileSelect}
             style={{ display: 'none' }}
-            accept=".txt,.pdf,.doc,.docx,.hwp,.md"
+            accept=".txt,.pdf,.doc,.docx,.hwp,.md,.ppt,.pptx"
           />
         </div>
 
         <div className="document-content">
           {selectedDoc ? (
             <div className="selected-document">
-              <h2>{selectedDoc.title}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <h2 style={{ margin: 0 }}>{selectedDoc.title}</h2>
+                {selectedDoc.scopeName && (
+                  <span style={{ fontSize: 12, background: '#e7f3ff', color: '#007bff', padding: '2px 8px', borderRadius: 12, fontWeight: 600 }}>
+                    {selectedDoc.scopeName}
+                  </span>
+                )}
+              </div>
               <div className="doc-meta">
                 <span>작성일: {new Date(selectedDoc.createdAt).toLocaleDateString('ko-KR')}</span>
               </div>
-              <div className="doc-body">
-                {selectedDoc.fileId ? (
-                  (() => {
-                    const ct = selectedDoc.fileContentType || ''
-                    if (ct.startsWith && ct.startsWith('image/')) {
-                      return (
-                        <img
-                          src={fileStreamUrl(selectedDoc.fileId)}
-                          alt={selectedDoc.title}
-                          onError={() => setPreviewError(true)}
-                          style={{ maxWidth: '100%' }}
-                        />
-                      )
-                    }
-
-                    if (ct.includes && ct.includes('pdf')) {
-                      if (previewError) {
-                        return (
-                          <div>
-                            <p>미리보기를 불러올 수 없습니다.</p>
-                            <a href={fileDownloadUrl(selectedDoc.fileId)} target="_blank" rel="noopener noreferrer">파일 다운로드</a>
-                          </div>
-                        )
-                      }
-
-                      return (
-                        <iframe
-                          src={fileStreamUrl(selectedDoc.fileId)}
-                          title={selectedDoc.title}
-                          onError={() => setPreviewError(true)}
-                          style={{ width: '100%', height: '600px', border: 'none' }}
-                        />
-                      )
-                    }
-
-                    if (previewError) {
-                      return (
-                        <div>
-                          <p>미리보기를 불러올 수 없습니다.</p>
-                          <a href={fileDownloadUrl(selectedDoc.fileId)} target="_blank" rel="noopener noreferrer">파일 다운로드</a>
-                        </div>
-                      )
-                    }
-
-                    return (
-                      <iframe
-                        src={filePreviewUrl(selectedDoc.fileId)}
-                        title={selectedDoc.title}
-                        onError={() => setPreviewError(true)}
-                        style={{ width: '100%', height: '600px', border: 'none' }}
-                      />
-                    )
-                  })()
-                ) : (
-                  (selectedDoc.originalContent && selectedDoc.originalContent.trim()) ? selectedDoc.originalContent : '내용이 없습니다.'
-                )}
+              <div className="doc-body" style={{ whiteSpace: selectedDoc.fileId ? 'normal' : 'pre-wrap', lineHeight: '1.6' }}>
+                {renderDocumentBody()}
               </div>
             </div>
           ) : (
@@ -340,50 +374,45 @@ export default function DocumentWriter() {
         <div className="ai-prompt-section">
           <div className="prompt-tabs">
             {attachedDocs.map((doc) => (
-              <div
-                key={doc.docId}
-                className="prompt-tab prompt-tab-added"
-              >
+              <div key={doc.docId} className="prompt-tab prompt-tab-added">
                 <button
                   className="tab-remove-btn"
                   onClick={() => handleRemoveAttachedDoc(doc.docId)}
                   title="제거"
                 >
-                  ×
+                  x
                 </button>
                 <span className="tab-name">{doc.title}</span>
               </div>
             ))}
 
             {selectedDoc && !attachedDocs.some(d => d.docId === selectedDoc.docId) && (
-              <div
-                className="prompt-tab prompt-tab-pending"
-                onClick={handleAddToPrompt}
-              >
+              <div className="prompt-tab prompt-tab-pending" onClick={handleAddToPrompt}>
                 <span className="tab-add-btn">+</span>
                 <span className="tab-name">{selectedDoc.title}</span>
               </div>
             )}
           </div>
 
+          <div className="prompt-header">
+            <h3>AI 문서 생성</h3>
+            <p>프롬프트를 입력하면 AI가 문서를 자동으로 생성합니다.</p>
+          </div>
           <div className="prompt-input-group">
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="프롬프트를 입력하세요..."
+              placeholder="생성할 문서의 주제와 내용을 입력하세요..."
               className="prompt-textarea"
               disabled={aiLoading}
             />
-
-            <div className="prompt-actions">
-              <button
-                onClick={handleAiGenerate}
-                className="btn-generate"
-                disabled={aiLoading}
-              >
-                {aiLoading ? '생성 중...' : 'AI 생성'}
-              </button>
-            </div>
+            <button
+              onClick={handleAiGenerate}
+              className="btn-generate"
+              disabled={aiLoading}
+            >
+              {aiLoading ? '생성 중...' : 'AI 생성'}
+            </button>
           </div>
         </div>
       </div>
