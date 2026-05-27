@@ -56,17 +56,22 @@ public class S3FileService {
 
             return key;
         } catch (IOException e) {
-            throw new RuntimeException("S3 업로드 실패", e);
+            throw new com.ang.Backend.common.exception.CustomException(
+                    com.ang.Backend.common.exception.ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 
     public byte[] download(String key) {
-        GetObjectRequest request = GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build();
-
-        return s3Client.getObjectAsBytes(request).asByteArray();
+        try {
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+            return s3Client.getObjectAsBytes(request).asByteArray();
+        } catch (software.amazon.awssdk.services.s3.model.NoSuchKeyException e) {
+            throw new com.ang.Backend.common.exception.CustomException(
+                    com.ang.Backend.common.exception.ErrorCode.FILE_NOT_FOUND);
+        }
     }
 
     public void delete(String key) {

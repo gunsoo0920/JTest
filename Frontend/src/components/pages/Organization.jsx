@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { FiMail, FiMessageSquare } from 'react-icons/fi';
 import { getScopes, getScopeMembers } from '../../api/scopeApi';
 
 const positionOrder = { '원장': 1, '센터장': 2, '본부장': 3, '팀장': 4, '팀원': 5 };
@@ -61,7 +62,7 @@ const getPositionInScope = (member, scopeId) => {
   return scopedPosition || member.position || '직급 미정';
 };
 
-const isVisibleOrgMember = member => (member.roleLevel ?? 0) < 100;
+const isVisibleOrgMember = member => member.status === 'ACTIVE' && (member.roleLevel ?? 0) < 100;
 const hasAnyPosition = (member, scopeId, keywords) => keywords.some(keyword => getPositionInScope(member, scopeId).includes(keyword));
 
 const getPositionRank = position => {
@@ -120,7 +121,7 @@ const MemberCard = ({ member, scopeId, onClick, teamName }) => (
   </button>
 );
 
-export default function Organization({ currentSubPage = 'org-all' }) {
+export default function Organization({ currentSubPage = 'org-all', onSendMail }) {
   const [scopes, setScopes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -216,7 +217,7 @@ export default function Organization({ currentSubPage = 'org-all' }) {
             const data = Array.isArray(res.data?.data) ? res.data.data : [];
 
             if (!isCancelled) {
-              setMembersCache(prev => ({ ...prev, [scopeId]: data }));
+              setMembersCache(prev => ({ ...prev, [scopeId]: data.filter(isVisibleOrgMember) }));
             }
           } catch (error) {
             console.error('조직 구성원 로드 실패', error);
@@ -327,6 +328,7 @@ export default function Organization({ currentSubPage = 'org-all' }) {
                   <MemberCard
                     member={member}
                     scopeId={scope.id}
+                    teamName={scope.name}
                     onClick={(clickedMember, scopeId) => setSelectedMember({ member: clickedMember, scopeId })}
                   />
                 </div>
@@ -435,6 +437,24 @@ export default function Organization({ currentSubPage = 'org-all' }) {
               </div>
             </div>
             <div className="org-modal-actions">
+              <div className="org-modal-left">
+                <button
+                  type="button"
+                  className="org-modal-btn org-modal-btn-chat"
+                  title="채팅 기능 준비 중"
+                >
+                  <FiMessageSquare />
+                  채팅
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSendMail?.(selectedMember.member)}
+                  className="org-modal-btn org-modal-btn-mail"
+                >
+                  <FiMail />
+                  메일
+                </button>
+              </div>
               <button onClick={() => setSelectedMember(null)} className="org-modal-btn org-modal-btn-close">
                 닫기
               </button>
