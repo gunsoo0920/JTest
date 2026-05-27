@@ -52,6 +52,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem('user')
     localStorage.removeItem('token')
+    alert('로그아웃되었습니다.')
     navigate('/login')
   }
 
@@ -85,6 +86,7 @@ export default function Dashboard() {
       user={user}
       currentSubPage={currentPage}
       me={user} // Admin 컴포넌트 등에서 사용할 내 정보
+        onUserUpdate={setUser}
     />
   }
 
