@@ -346,7 +346,8 @@ public class MailService {
         mailAttachmentRepository.deleteAll(attachments);
         mailRecipientRepository.deleteAll(mailRecipientRepository.findByMail(mail));
         mailRepository.delete(mail);
-        
+
+
     }
 
     // 파일 다운로드
