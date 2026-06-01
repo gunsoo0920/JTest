@@ -3,7 +3,8 @@ import api from '../../api/axios'
 import {
   getMyDocuments,
   getDepartmentDocuments,
-  deleteDocument
+  deleteDocument,
+  downloadDocumentFile
 } from '../../api/documentApi'
 // removed mock data imports - use backend APIs only
 import {
@@ -14,7 +15,8 @@ import {
   isImageDocument,
 } from '../../utils/documentFileUtils'
 import DocumentFilePreview from './DocumentFilePreview'
-import { FiChevronRight } from 'react-icons/fi'
+import { FiChevronRight, FiUpload } from 'react-icons/fi'
+import { useAiGeneration } from '../../contexts/useAiGeneration'
 // use backend download endpoint instead of frontend export logic
 
 const parseCsvToTable = (text) => {
@@ -35,10 +37,11 @@ export default function DocumentWriter() {
   const [error, setError] = useState(null)
   const [prompt, setPrompt] = useState('')
   const [aiOutputFormat, setAiOutputFormat] = useState('pdf')
-  const [aiLoading, setAiLoading] = useState(false)
   const [attachedDocs, setAttachedDocs] = useState([])
   const [category, setCategory] = useState('my')
+  const [sortOrder, setSortOrder] = useState('newest')
   const [previewUrl, setPreviewUrl] = useState(null)
+  const [previewData, setPreviewData] = useState(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -52,6 +55,14 @@ export default function DocumentWriter() {
   const [uploadFile, setUploadFile] = useState(null)
   const [uploadTargetScopeId, setUploadTargetScopeId] = useState('')
   const fileInputRef = useRef(null)
+  const mountedRef = useRef(true)
+  const { isGenerating: aiLoading, startGeneration } = useAiGeneration()
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     const fetchScopes = async () => {
@@ -72,6 +83,24 @@ export default function DocumentWriter() {
   }, [category, selectedScopeId])
 
   useEffect(() => {
+    const handleGeneratedDocument = (event) => {
+      const generatedDocument = event.detail?.document
+      if (!generatedDocument) return
+
+      if (category === 'my') {
+        setDocuments((currentDocuments) => {
+          const exists = currentDocuments.some((doc) => doc.docId === generatedDocument.docId)
+          return exists ? currentDocuments : [generatedDocument, ...currentDocuments]
+        })
+      }
+      setSelectedDoc(generatedDocument)
+    }
+
+    window.addEventListener('ang:ai-document-generated', handleGeneratedDocument)
+    return () => window.removeEventListener('ang:ai-document-generated', handleGeneratedDocument)
+  }, [category])
+
+  useEffect(() => {
     const filtered = documents.filter((doc) => {
       const matchesSearch =
         doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,14 +109,23 @@ export default function DocumentWriter() {
 
       return matchesSearch
     })
-    setFilteredDocuments(filtered)
-  }, [searchTerm, documents])
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime()
+      const dateB = new Date(b.createdAt).getTime()
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
+    })
+
+    setFilteredDocuments(sorted)
+  }, [searchTerm, documents, sortOrder])
 
   useEffect(() => {
     let objectUrl = null
 
     const loadPreview = async () => {
       setPreviewUrl(null)
+      setPreviewData(null)
       setPreviewError(null)
 
       if (!selectedDoc) return
@@ -97,6 +135,7 @@ export default function DocumentWriter() {
       if (previewKind === 'text') return
 
       if (
+        !selectedDoc.fileId &&
         !selectedDoc.previewFileId &&
         (
           (previewKind === 'word' && (selectedDoc.mockPreviewHtml || selectedDoc.originalContent)) ||
@@ -106,8 +145,12 @@ export default function DocumentWriter() {
         return
       }
 
-      const previewFileId = selectedDoc.previewFileId || selectedDoc.fileId
+      const shouldRenderOriginal = ['word', 'excel', 'hwp', 'hwpx'].includes(previewKind)
+      const previewFileId = shouldRenderOriginal
+        ? selectedDoc.fileId
+        : selectedDoc.previewFileId || selectedDoc.fileId
       const canPreviewBlob = previewFileId && (
+        shouldRenderOriginal ||
         Boolean(selectedDoc.previewFileId) ||
         previewKind === 'pdf' ||
         previewKind === 'image' ||
@@ -132,11 +175,18 @@ export default function DocumentWriter() {
         const response = await api.get(`/files/preview/${previewFileId}`, {
           responseType: 'blob',
         })
+        const blob = response.data
+
+        if (['word', 'excel', 'hwp', 'hwpx'].includes(previewKind)) {
+          setPreviewData(await blob.arrayBuffer())
+          return
+        }
+
         const previewType =
           selectedDoc.previewFileId || previewKind === 'pdf' || selectedDoc.previewFileContentType?.toLowerCase().includes('pdf')
             ? 'application/pdf'
-            : selectedDoc.fileContentType || response.data?.type || 'image/*'
-        objectUrl = URL.createObjectURL(new Blob([response.data], { type: previewType }))
+            : selectedDoc.fileContentType || blob?.type || 'image/*'
+        objectUrl = URL.createObjectURL(new Blob([blob], { type: previewType }))
         setPreviewUrl(objectUrl)
       } catch (err) {
         console.error('문서 미리보기 로드 실패:', err)
@@ -169,24 +219,43 @@ export default function DocumentWriter() {
   }, [showFullView])
 
   const handleExport = async () => {
-    if (!selectedDoc) return
+    if (!selectedDoc || !selectedDoc.fileId) return
 
     try {
       setIsExporting(true)
-      // call backend download endpoint which returns file blob
-      const res = await api.get(`/documents/${selectedDoc.docId}/download`, {
-        responseType: 'blob',
-      })
+      const res = await downloadDocumentFile(selectedDoc.fileId)
 
       const disposition = res.headers['content-disposition']
       let filename = selectedDoc.originalFileName || selectedDoc.title || 'document'
       if (disposition) {
-        const match = disposition.match(/filename\*=UTF-8''(.+)|filename="?([^;\"]+)"?/) 
+        const match = disposition.match(/filename\*=UTF-8''(.+)|filename="?([^;\\"]+)"?/) 
         if (match) {
           filename = decodeURIComponent(match[1] || match[2])
         }
       }
 
+      // 1. Try modern File System Access API (showSaveFilePicker)
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: filename,
+          })
+          const writable = await handle.createWritable()
+          await writable.write(res.data)
+          await writable.close()
+
+          window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
+            detail: { message: '파일을 원하는 위치에 저장했어요!' },
+          }))
+          return // Exit after successful modern save
+        } catch (pickerErr) {
+          // User cancelled or other error - if cancelled, just return
+          if (pickerErr.name === 'AbortError') return
+          console.warn('File picker failed, falling back to traditional download:', pickerErr)
+        }
+      }
+
+      // 2. Fallback to traditional <a> tag download
       const url = window.URL.createObjectURL(new Blob([res.data]))
       const link = document.createElement('a')
       link.href = url
@@ -197,7 +266,7 @@ export default function DocumentWriter() {
       window.URL.revokeObjectURL(url)
 
       window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
-        detail: { message: '문서를 내보냈어요!' },
+        detail: { message: '문서를 다운로드했어요!' },
       }))
     } catch (err) {
       console.error('문서다운로드 실패:', err)
@@ -306,56 +375,30 @@ export default function DocumentWriter() {
       return
     }
 
+    const payload = {
+      prompt,
+      outputFormat: aiOutputFormat,
+      attachedDocIds: attachedDocs.map((doc) => doc.docId),
+      attachedDocs: attachedDocs.length > 0
+        ? attachedDocs.map((doc) => ({
+            docId: doc.docId,
+            title: doc.title,
+            content: doc.originalContent || doc.title,
+          }))
+        : null,
+    }
+
     try {
-      setAiLoading(true)
-      window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
-        detail: {
-          message: '문서 생성 중... 제가 열심히 뛰고 있어요.',
-          animation: 'run',
-        },
-      }))
-
-      const payload = {
-        prompt,
-        outputFormat: aiOutputFormat,
-        attachedDocIds: attachedDocs.map((doc) => doc.docId),
-        attachedDocs: attachedDocs.length > 0
-          ? attachedDocs.map((doc) => ({
-              docId: doc.docId,
-              title: doc.title,
-              content: doc.originalContent || doc.title,
-            }))
-          : null,
-      }
-
-      const response = await api.post('/documents/ai-generate', payload)
-
-      if (response.data.success) {
-        if (category === 'my') {
-          setDocuments([response.data.data, ...documents])
-        }
-        setSelectedDoc(response.data.data)
+      await startGeneration(payload)
+      if (mountedRef.current) {
         setPrompt('')
         setAttachedDocs([])
-        window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
-          detail: {
-            message: 'AI 문서 초안이 완성됐어요.',
-            animation: 'idle',
-          },
-        }))
-        alert('문서가 생성되었습니다!')
       }
     } catch (err) {
       console.error('AI 문서 생성 실패:', err)
-      window.dispatchEvent(new CustomEvent('ang:mascot-alert', {
-        detail: {
-          message: 'AI 문서 생성에 실패했어요. 연결 상태를 확인해주세요.',
-          animation: 'idle',
-        },
-      }))
-      alert(err.response?.data?.message || 'AI 문서 생성에 실패했습니다.')
-    } finally {
-      setAiLoading(false)
+      if (mountedRef.current) {
+        alert(err.response?.data?.message || err.message || 'AI 문서 생성에 실패했습니다.')
+      }
     }
   }
 
@@ -397,7 +440,7 @@ export default function DocumentWriter() {
           )}
         </div>
 
-        <div className="search-container">
+        <div className="search-with-filter">
           <input
             type="text"
             placeholder="문서 검색..."
@@ -405,6 +448,14 @@ export default function DocumentWriter() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
+          <button 
+            type="button"
+            className="sort-toggle-btn"
+            onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
+            title={sortOrder === 'newest' ? '최신순 (오래된순으로 변경)' : '오래된순 (최신순으로 변경)'}
+          >
+            {sortOrder === 'newest' ? '↓' : '↑'}
+          </button>
         </div>
 
         <div className="document-list">
@@ -450,11 +501,20 @@ export default function DocumentWriter() {
                     )}
                   </div>
                   {category === 'dept' && doc.scopeName && (
-                    <span className="doc-scope-tag">{doc.scopeName}</span>
+                    <span className={`doc-scope-tag ${doc.scopeName === 'N/A' ? 'doc-scope-tag--personal' : ''}`}>
+                      {doc.scopeName === 'N/A' ? '개인 문서' : doc.scopeName}
+                    </span>
                   )}
                 </div>
                 <div className="doc-date">
-                  {new Date(doc.createdAt).toLocaleDateString('ko-KR')}
+                  {new Date(doc.createdAt).toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}
                 </div>
               </div>
             ))
@@ -463,40 +523,33 @@ export default function DocumentWriter() {
       </div>
 
       <div className={`document-main ${promptOpen ? '' : 'document-main--prompt-collapsed'}`}>
-        <div className="main-header">
-          <h1>AI 문서작성</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              type="button"
-              className="btn-add-document"
-              onClick={() => setShowUploadModal(true)}
-              disabled={isUploading}
-            >
-              {isUploading ? '업로드 중...' : '+ 파일 추가'}
-            </button>
-          </div>
-        </div>
-
         <div className="document-content">
           {selectedDoc ? (
             <div className="selected-document">
               <div className="doc-viewer-header">
                 <div className="doc-viewer-header-left">
                   <h2 className="selected-document-title">{selectedDoc.title}</h2>
-                  <div className="doc-viewer-tags">
-                    <span className={`doc-type-tag doc-type-tag--${getDocumentPreviewKind(selectedDoc)}`}>
-                      {getFileTypeLabel(selectedDoc)}
+                  <span className={`doc-type-tag doc-type-tag--${getDocumentPreviewKind(selectedDoc)}`}>
+                    {getFileTypeLabel(selectedDoc)}
+                  </span>
+                  {selectedDoc.scopeName && (
+                    <span className={`doc-scope-badge ${selectedDoc.scopeName === 'N/A' ? 'doc-scope-badge--personal' : ''}`}>
+                      {selectedDoc.scopeName === 'N/A' ? '개인 문서' : selectedDoc.scopeName}
                     </span>
-                    {selectedDoc.scopeName && (
-                      <span className="doc-scope-badge">{selectedDoc.scopeName}</span>
-                    )}
-                  </div>
-                  <div className="doc-meta doc-meta--compact">
-                    <span>작성일: {new Date(selectedDoc.createdAt).toLocaleDateString('ko-KR')}</span>
-                    {selectedDoc.originalFileName && (
-                      <span>파일: {selectedDoc.originalFileName}</span>
-                    )}
-                  </div>
+                  )}
+                  <span className="doc-meta-item">
+                    작성일: {new Date(selectedDoc.createdAt).toLocaleString('ko-KR', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false
+                    })}
+                  </span>
+                  {selectedDoc.originalFileName && (
+                    <span className="doc-meta-item">파일명: {selectedDoc.originalFileName}</span>
+                  )}
                 </div>
                 <div className="doc-viewer-header-actions">
                   <button
@@ -520,6 +573,7 @@ export default function DocumentWriter() {
               <DocumentFilePreview
                 doc={selectedDoc}
                 previewUrl={previewUrl}
+                previewData={previewData}
                 previewLoading={previewLoading}
                 previewError={previewError}
               />
@@ -587,27 +641,43 @@ export default function DocumentWriter() {
             />
 
             <div className="prompt-actions">
-              <div className="ai-format-selector" aria-label="AI 문서 형식 선택">
-                {['pdf', 'docx', 'xlsx', 'txt'].map((format) => (
-                  <button
-                    key={format}
-                    type="button"
-                    className={`ai-format-btn ${aiOutputFormat === format ? 'active' : ''}`}
-                    onClick={() => setAiOutputFormat(format)}
-                    disabled={aiLoading}
-                  >
-                    {format.toUpperCase()}
-                  </button>
-                ))}
+              <div className="prompt-actions-left">
+                <button
+                  type="button"
+                  className="btn-prompt-upload"
+                  onClick={() => setShowUploadModal(true)}
+                  disabled={isUploading}
+                  title="파일 업로드"
+                >
+                  <FiUpload />
+                  <span>업로드</span>
+                </button>
+
+                <div className="ai-format-selector" aria-label="AI 문서 형식 선택">
+                  {['pdf', 'docx', 'xlsx', 'txt', 'hwp'].map((format) => (
+                    <button
+                      key={format}
+                      type="button"
+                      className={`ai-format-btn ${aiOutputFormat === format ? 'active' : ''}`}
+                      onClick={() => setAiOutputFormat(format)}
+                      disabled={aiLoading}
+                    >
+                      {format.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={handleAiGenerate}
-                className="btn-generate"
-                disabled={aiLoading}
-              >
-                {aiLoading ? '생성 중...' : 'AI 생성'}
-              </button>
+
+              <div className="prompt-actions-right">
+                <button
+                  type="button"
+                  onClick={handleAiGenerate}
+                  className="btn-generate"
+                  disabled={aiLoading}
+                >
+                  {aiLoading ? '생성 중...' : 'AI 생성'}
+                </button>
+              </div>
             </div>
           </div>
           )}
@@ -630,6 +700,7 @@ export default function DocumentWriter() {
             <DocumentFilePreview
               doc={selectedDoc}
               previewUrl={previewUrl}
+              previewData={previewData}
               previewLoading={previewLoading}
               previewError={previewError}
               variant="fullscreen"
