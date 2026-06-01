@@ -2,6 +2,7 @@ package com.ang.Backend.domain.chat.service;
 
 import com.ang.Backend.common.enums.ChatMessageType;
 import com.ang.Backend.common.enums.ChatRoomType;
+import com.ang.Backend.common.enums.NotificationType;
 import com.ang.Backend.common.exception.CustomException;
 import com.ang.Backend.common.exception.ErrorCode;
 import com.ang.Backend.domain.chat.dto.ChatDto;
@@ -11,6 +12,7 @@ import com.ang.Backend.domain.chat.entity.ChatRoom;
 import com.ang.Backend.domain.chat.repository.ChatMemberRepository;
 import com.ang.Backend.domain.chat.repository.ChatMessageRepository;
 import com.ang.Backend.domain.chat.repository.ChatRoomRepository;
+import com.ang.Backend.domain.notification.service.NotificationService;
 import com.ang.Backend.domain.user.entity.User;
 import com.ang.Backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class ChatRoomService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationService notificationService;
 
     // 1:1 채팅방 생성 (이미 있으면 기존 방 반환)
     @Transactional
@@ -186,6 +189,7 @@ public class ChatRoomService {
         ChatMember member = chatMemberRepository.findByRoomAndUser(room, user)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_CHAT_MEMBER));
         member.setLastReadAt(LocalDateTime.now());
+        notificationService.deleteByTarget(user, roomId, NotificationType.CHAT);
     }
 
     private void rejoinIfLeft(ChatRoom room, User user) {
