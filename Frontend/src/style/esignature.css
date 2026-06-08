@@ -1,542 +1,777 @@
 /* ============================================================================
-   E-SIGNATURE
+   E-SIGNATURE FULL SCREEN WORKSPACE
    ============================================================================ */
-.esignature-page {
+.esignature-shell {
+  min-height: calc(100vh - 68px);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
+  padding: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(54, 162, 255, 0.12), transparent 30%),
+    linear-gradient(180deg, #f6f9fc 0%, #eef4fb 100%);
 }
 
-.esignature-header {
+.esignature-topbar {
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
-  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  border-radius: 22px;
+  background: linear-gradient(90deg, #1f7be6 0%, #2d8df4 100%);
+  color: #fff;
+  box-shadow: 0 14px 32px rgba(31, 123, 230, 0.22);
 }
 
-.esignature-header h1 {
-  font-size: 28px;
-  color: #333;
-  margin: 0;
-}
-
-.header-actions {
+.esignature-topbar-copy {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.esignature-eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+}
+
+.esignature-topbar h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.esignature-topbar p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.92;
+}
+
+.esignature-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.esignature-top-actions .btn-create {
+  background: #fff;
+  color: #1f7be6;
+}
+
+.esignature-top-actions .btn-create:hover {
+  background: #eef6ff;
+}
+
+.esignature-top-actions .btn-designated {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.esignature-top-actions .btn-designated:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.esignature-workbench {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr) 340px;
+  gap: 18px;
+}
+
+.esignature-rail,
+.esignature-main,
+.esignature-panel {
+  min-height: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 14px 36px rgba(24, 53, 88, 0.08);
+}
+
+.esignature-rail,
+.esignature-panel {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+.esignature-rail {
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  gap: 16px;
+}
+
+.esignature-rail-card {
+  border-radius: 18px;
+  padding: 18px;
+  background: linear-gradient(180deg, #f4f8ff 0%, #eaf3ff 100%);
+  border: 1px solid rgba(31, 123, 230, 0.12);
+}
+
+.esignature-rail-card--primary {
+  background: linear-gradient(180deg, #1f7be6 0%, #2d8df4 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(31, 123, 230, 0.22);
+}
+
+.esignature-rail-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: inherit;
+}
+
+.esignature-rail-desc {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: inherit;
+  opacity: 0.86;
+}
+
+.esignature-rail-card .btn-create {
+  width: 100%;
+  justify-content: center;
+}
+
+.esignature-rail-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.esignature-rail-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: var(--transition-soft);
+  text-align: left;
+}
+
+.esignature-rail-menu-item:hover {
+  background: rgba(31, 123, 230, 0.08);
+}
+
+.esignature-rail-menu-item.active {
+  background: rgba(31, 123, 230, 0.12);
+  color: #1f7be6;
+  font-weight: 700;
+}
+
+.esignature-rail-menu-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.esignature-rail-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  background: #eaf3ff;
+  color: #1f7be6;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.esignature-approval-feed {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.esignature-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.esignature-section-head h2 {
+  margin: 0;
+  font-size: 15px;
+  color: #20324f;
+}
+
+.esignature-section-head span {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.esignature-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.esignature-feed-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(15, 35, 52, 0.08);
+  border-radius: 16px;
+  background: #fff;
+  cursor: pointer;
+  transition: var(--transition-soft);
+}
+
+.esignature-feed-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(31, 123, 230, 0.22);
+  box-shadow: 0 10px 24px rgba(31, 123, 230, 0.08);
+}
+
+.esignature-feed-item.active {
+  border-color: rgba(31, 123, 230, 0.3);
+  box-shadow: 0 10px 24px rgba(31, 123, 230, 0.12);
+}
+
+.esignature-feed-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 10px;
 }
 
-.btn-designated,
-.btn-create {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.btn-designated {
-  background-color: white;
-  color: var(--color-primary);
-  border: 2px solid var(--color-primary);
-}
-
-.btn-designated:hover {
-  background-color: #f0f8fb;
-}
-
-.btn-create {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.btn-create:hover {
-  background-color: var(--color-primary-hover);
-}
-
-.esignature-list {
+.esignature-feed-item-title {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
+  min-width: 0;
 }
 
-.empty-state {
-  display: flex;
+.esignature-feed-item-title strong {
+  color: #20324f;
+  font-size: 14px;
+}
+
+.esignature-feed-item-title span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.esignature-status-chip {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 300px;
-  color: #999;
-  font-size: 16px;
-  background: white;
-  border-radius: 8px;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.approval-item {
-  display: grid;
-  grid-template-columns: 1fr 200px 120px 100px;
+.esignature-feed-meta {
+  display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 16px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #eee;
-  cursor: pointer;
-  transition: all 0.2s;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
-.approval-item:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 4px 12px rgba(255, 140, 116, 0.1);
+.esignature-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(15, 35, 52, 0.06);
 }
 
-.approval-info {
+.esignature-main-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(15, 35, 52, 0.06);
+}
+
+.esignature-main-toolbar-copy {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.approval-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+.esignature-main-toolbar-copy h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #20324f;
 }
 
-.approval-id {
-  font-size: 12px;
-  color: #999;
-}
-
-.approval-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.requester {
+.esignature-main-toolbar-copy p {
+  margin: 0;
   font-size: 13px;
-  font-weight: 600;
-  color: #333;
+  color: var(--color-text-muted);
 }
 
-.role {
-  font-size: 12px;
-  color: #999;
-}
-
-.approval-date {
-  font-size: 13px;
-  color: #666;
-}
-
-.status-button {
-  padding: 6px 12px;
-  border-radius: 20px;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-}
-
-/* E-SIGNATURE DETAIL */
-.esignature-detail {
+.esignature-main-toolbar-actions {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: none;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #666;
-  width: fit-content;
-  transition: all 0.2s;
-}
-
-.back-button:hover {
-  background-color: #f5f5f5;
-  border-color: #999;
-}
-
-.detail-header {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #eee;
-}
-
-.detail-header h1 {
-  margin: 0 0 12px 0;
-  font-size: 24px;
-  color: #333;
-}
-
-.detail-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.meta-item {
-  font-size: 13px;
-  color: #666;
+.esignature-main-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 22px;
 }
 
-.meta-item strong {
-  color: #333;
+.esignature-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 18px;
+  min-height: 100%;
 }
 
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.detail-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #eee;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.content-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.content-section h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.content-section p {
-  margin: 0;
-  font-size: 13px;
-  color: #666;
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
-.reject-reason {
-  background-color: #ffebee;
-  padding: 12px;
-  border-radius: 6px;
-  border-left: 4px solid #ff5252;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-}
-
-.btn-approve,
-.btn-reject {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.btn-approve {
-  background-color: #28A745;
-  color: white;
-}
-
-.btn-approve:hover {
-  background-color: #218838;
-}
-
-.btn-reject {
-  background-color: #DC3545;
-  color: white;
-}
-
-.btn-reject:hover {
-  background-color: #c82333;
-}
-
-/* E-SIGNATURE CREATE */
-.esignature-create {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-header {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #eee;
-}
-
-.form-header h1 {
-  margin: 0;
-  font-size: 24px;
-  color: #333;
-}
-
-.approval-form {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #eee;
+.esignature-card {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(15, 35, 52, 0.08);
+  background: #fff;
 }
 
-.form-group {
+.esignature-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.esignature-card-title h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #20324f;
+}
+
+.esignature-card-title span {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.esignature-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.esignature-form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.form-group label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+.esignature-form-group.full {
+  grid-column: 1 / -1;
 }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+.esignature-form-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #20324f;
+}
+
+.esignature-form-group input,
+.esignature-form-group textarea,
+.esignature-form-group select {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid rgba(15, 35, 52, 0.1);
+  border-radius: 14px;
+  background: #f8fbff;
+  color: var(--color-text);
   outline: none;
+  transition: var(--transition-soft);
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(255, 140, 116, 0.1);
+.esignature-form-group input:focus,
+.esignature-form-group textarea:focus,
+.esignature-form-group select:focus {
+  background: #fff;
+  border-color: rgba(31, 123, 230, 0.45);
+  box-shadow: 0 0 0 4px rgba(31, 123, 230, 0.1);
 }
 
-.form-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  padding-top: 10px;
-}
-
-.btn-submit,
-.btn-cancel {
-  padding: 10px 24px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.btn-submit {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.btn-submit:hover {
-  background-color: var(--color-primary-hover);
-}
-
-.btn-cancel {
-  background-color: #e0e0e0;
-  color: #333;
-}
-
-.btn-cancel:hover {
-  background-color: #d0d0d0;
-}
-
-/* ============================================================================
-   ADD DOCUMENT MODAL
-   ============================================================================ */
-.add-document-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.add-document-form .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.add-document-form .form-group label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.form-input {
-    padding: 14px 18px;
-    border: none;
-    border-radius: var(--radius-pill);
-    background: var(--input-bg);
-    box-shadow: var(--input-shadow-inset);
-  font-size: 14px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--color-text);
-  outline: none;
-    transition: var(--transition-soft);
-}
-
-.form-input:focus {
-    background: var(--color-surface);
-    box-shadow: var(--shadow-focus-glow);
-}
-
-.form-input:disabled {
-  background-color: #f5f5f5;
-  color: #999;
-  cursor: not-allowed;
-}
-
-.form-textarea {
-    padding: 16px 20px;
-    border: none;
-    border-radius: var(--radius-lg);
-    background: var(--input-bg);
-    box-shadow: var(--input-shadow-inset);
-  font-size: 14px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--color-text);
+.esignature-form-group textarea {
+  min-height: 130px;
   resize: vertical;
-    transition: var(--transition-soft);
-  min-height: 120px;
-  max-height: 250px;
-  outline: none;
-  transition: border-color 0.2s;
 }
 
-.form-textarea:focus {
-    outline: none;
-    background: var(--color-surface);
-    box-shadow: var(--shadow-focus-glow);
-}
-
-.form-textarea:disabled {
-  background-color: #f5f5f5;
-  color: #999;
-  cursor: not-allowed;
-}
-
-.add-document-form .form-actions {
+.esignature-document-preview {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.esignature-document-sheet {
+  min-height: 560px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 35, 52, 0.1);
+  background:
+    linear-gradient(180deg, #fff 0%, #fff 100%),
+    repeating-linear-gradient(
+      180deg,
+      rgba(31, 123, 230, 0.04) 0,
+      rgba(31, 123, 230, 0.04) 1px,
+      transparent 1px,
+      transparent 48px
+    );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+}
+
+.esignature-document-sheet-inner {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.esignature-document-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.esignature-document-topline strong {
+  font-size: 20px;
+  color: #20324f;
+}
+
+.esignature-document-topline span {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.esignature-document-block {
+  border: 1px solid rgba(15, 35, 52, 0.08);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.esignature-document-block-header {
+  padding: 12px 14px;
+  background: #f8fbff;
+  border-bottom: 1px solid rgba(15, 35, 52, 0.08);
+  font-size: 13px;
+  font-weight: 700;
+  color: #20324f;
+}
+
+.esignature-document-block-body {
+  padding: 14px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--color-text);
+  white-space: pre-wrap;
+}
+
+.esignature-document-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.esignature-document-table th,
+.esignature-document-table td {
+  border: 1px solid rgba(15, 35, 52, 0.08);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.esignature-document-table th {
+  background: #f8fbff;
+  color: #20324f;
+  font-weight: 700;
+}
+
+.esignature-actions {
+  display: flex;
   justify-content: flex-end;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.add-document-form .btn-cancel {
-  background-color: #e0e0e0;
-  color: #333;
-  padding: 10px 24px;
+.esignature-actions .btn-create,
+.esignature-actions .btn-designated {
+  min-width: 120px;
+  justify-content: center;
+}
+
+.esignature-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.esignature-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+}
+
+.esignature-panel-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(15, 35, 52, 0.08);
+}
+
+.esignature-panel-card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #20324f;
+}
+
+.esignature-panel-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.esignature-approver-search {
+  display: flex;
+  gap: 8px;
+}
+
+.esignature-approver-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(15, 35, 52, 0.1);
+  border-radius: 14px;
+  background: #f8fbff;
+}
+
+.esignature-approver-search button,
+.esignature-panel-action {
   border: none;
-  border-radius: 6px;
+  border-radius: 14px;
+  background: #eaf3ff;
+  color: #1f7be6;
+  padding: 12px 14px;
   cursor: pointer;
+  font-weight: 700;
+}
+
+.esignature-approver-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.esignature-approver-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fbff;
+  border: 1px solid rgba(15, 35, 52, 0.06);
+}
+
+.esignature-approver-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.esignature-approver-info strong {
   font-size: 14px;
-  font-weight: 600;
-  transition: background-color 0.2s;
+  color: #20324f;
 }
 
-.add-document-form .btn-cancel:hover:not(:disabled) {
-  background-color: #d0d0d0;
+.esignature-approver-info span {
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
-.add-document-form .btn-cancel:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.esignature-attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.add-document-form .btn-submit {
-  background-color: var(--color-primary);
-  color: white;
-  padding: 10px 24px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.esignature-attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fbff;
+  border: 1px solid rgba(15, 35, 52, 0.06);
+  font-size: 13px;
+}
+
+.esignature-attachment-item span {
+  color: var(--color-text-muted);
+}
+
+.esignature-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  border-radius: 18px;
+  border: 1px dashed rgba(31, 123, 230, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--color-text-muted);
   font-size: 14px;
-  font-weight: 600;
-  transition: background-color 0.2s;
 }
 
-.add-document-form .btn-submit:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
+.esignature-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.add-document-form .btn-submit:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+.esignature-detail-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-@media (max-width: 1024px) {
-  .document-sidebar {
-    width: 280px;
+.esignature-detail-header h2 {
+  margin: 0;
+  font-size: 26px;
+  color: #20324f;
+}
+
+.esignature-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.esignature-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 18px;
+}
+
+.esignature-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.esignature-timeline-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fbff;
+  border: 1px solid rgba(15, 35, 52, 0.06);
+}
+
+.esignature-timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  margin-top: 3px;
+  background: #1f7be6;
+  flex-shrink: 0;
+}
+
+.esignature-timeline-item h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #20324f;
+}
+
+.esignature-timeline-item p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+@media (max-width: 1400px) {
+  .esignature-workbench {
+    grid-template-columns: 290px minmax(0, 1fr);
   }
 
-  .document-main .main-header {
-    padding: 16px;
+  .esignature-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 1100px) {
+  .esignature-workbench {
+    grid-template-columns: 1fr;
   }
 
-  .document-main .main-header h1 {
-    font-size: 20px;
+  .esignature-layout,
+  .esignature-detail-grid {
+    grid-template-columns: 1fr;
   }
 
-  .document-content {
-    padding: 20px;
+  .esignature-shell {
+    padding: 14px;
   }
 }
 
 @media (max-width: 768px) {
-  .document-writer-container {
+  .esignature-topbar {
+    align-items: flex-start;
     flex-direction: column;
   }
 
-  .document-sidebar {
-    width: 100%;
-    max-height: 300px;
-    border-right: none;
-    border-bottom: 1px solid #e0e0e0;
+  .esignature-topbar h1 {
+    font-size: 22px;
   }
 
-  .document-list {
-    max-height: 200px;
+  .esignature-main-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-    .sidebar {
-      margin: 0;
-      border-radius: 0;
-    }
+  .esignature-form-grid {
+    grid-template-columns: 1fr;
   }
+}

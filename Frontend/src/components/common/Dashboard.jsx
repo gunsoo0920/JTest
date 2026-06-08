@@ -37,19 +37,25 @@ const getMainCategory = (page) => {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const [user, setUser] = useState(null)
+  const [user] = useState(() => {
+    const savedUser = localStorage.getItem('user')
+    if (!savedUser) return null
+
+    try {
+      return JSON.parse(savedUser)
+    } catch {
+      return null
+    }
+  })
   const [currentPage, setCurrentPage] = useState('home-dashboard')
   const [contactRequest, setContactRequest] = useState(null)
   const [isChatWindowOpen, setIsChatWindowOpen] = useState(false)
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user')
-    if (!savedUser) {
+    if (!user) {
       navigate('/login')
-      return
     }
-    setUser(JSON.parse(savedUser))
-  }, [navigate])
+  }, [navigate, user])
 
   const handleLogout = () => {
     localStorage.removeItem('user')
@@ -89,18 +95,22 @@ export default function Dashboard() {
   const renderPage = () => {
     const mainCategory = getMainCategory(currentPage)
     const Component = PAGE_COMPONENTS[mainCategory]
+    const componentKey = mainCategory === 'esignature' ? currentPage : mainCategory
 
     if (!Component) return <Home user={user} />
 
-    return <Component
-      user={user}
-      currentSubPage={currentPage}
-      me={user}
-      contactRequest={contactRequest}
-      onContactRequestHandled={() => setContactRequest(null)}
-      onSendMail={openMailCompose}
-      onSubPageChange={handlePageChange}
-    />
+    return (
+      <Component
+        key={componentKey}
+        user={user}
+        currentSubPage={currentPage}
+        me={user}
+        contactRequest={contactRequest}
+        onContactRequestHandled={() => setContactRequest(null)}
+        onSendMail={openMailCompose}
+        onSubPageChange={handlePageChange}
+      />
+    )
   }
 
   if (!user) {
@@ -117,8 +127,8 @@ export default function Dashboard() {
         onOpenChatWindow={() => setIsChatWindowOpen(true)}
         isChatWindowOpen={isChatWindowOpen}
       />
-      <div className={`dashboard-content ${(currentPage === 'mypage' || currentPage === 'calendar' || getMainCategory(currentPage) === 'document') ? 'full-width' : ''}`}>
-        {currentPage !== 'mypage' && currentPage !== 'calendar' && getMainCategory(currentPage) !== 'document' && (
+      <div className={`dashboard-content ${(currentPage === 'mypage' || currentPage === 'calendar' || getMainCategory(currentPage) === 'document' || getMainCategory(currentPage) === 'esignature') ? 'full-width' : ''}`}>
+        {currentPage !== 'mypage' && currentPage !== 'calendar' && getMainCategory(currentPage) !== 'document' && getMainCategory(currentPage) !== 'esignature' && (
           <Sidebar
             currentPage={currentPage}
             onPageChange={handlePageChange}
@@ -135,7 +145,9 @@ export default function Dashboard() {
           onCloseChatWindow={() => setIsChatWindowOpen(false)}
         />
       )}
-      <FloatingMascot mode={getMainCategory(currentPage) === 'document' ? 'ai' : 'default'} />
+      {getMainCategory(currentPage) !== 'esignature' && (
+        <FloatingMascot mode={getMainCategory(currentPage) === 'document' ? 'ai' : 'default'} />
+      )}
     </div>
   )
 }
