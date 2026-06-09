@@ -95,7 +95,7 @@ export default function Dashboard() {
   const renderPage = () => {
     const mainCategory = getMainCategory(currentPage)
     const Component = PAGE_COMPONENTS[mainCategory]
-    const componentKey = mainCategory === 'esignature' ? currentPage : mainCategory
+    const componentKey = mainCategory
 
     if (!Component) return <Home user={user} />
 
@@ -134,7 +134,7 @@ export default function Dashboard() {
             onPageChange={handlePageChange}
           />
         )}
-        <div className="main-content">
+        <div className={`main-content${getMainCategory(currentPage) === 'esignature' ? ' main-content--fill' : ''}`}>
           {renderPage()}
         </div>
       </div>

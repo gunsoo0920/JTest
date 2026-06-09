@@ -1,777 +1,1478 @@
-/* ============================================================================
-   E-SIGNATURE FULL SCREEN WORKSPACE
-   ============================================================================ */
-.esignature-shell {
-  min-height: calc(100vh - 68px);
+/* ============================================================
+   ESignature — full-screen workspace
+   ============================================================ */
+
+.esig {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 20px;
-  background:
-    radial-gradient(circle at top left, rgba(54, 162, 255, 0.12), transparent 30%),
-    linear-gradient(180deg, #f6f9fc 0%, #eef4fb 100%);
+  flex: 1;
+  min-height: 0;
+  background: var(--color-bg);
+  overflow: hidden;
 }
 
-.esignature-topbar {
+/* ── Loader ─────────────────────────────────────────────── */
+.esig-loader {
+  flex: 1;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+/* ── Left Rail ───────────────────────────────────────────── */
+.esig-rail {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 12px;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border-subtle);
+  overflow-y: auto;
+}
+
+.esig-rail-header {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px 22px;
-  border-radius: 22px;
-  background: linear-gradient(90deg, #1f7be6 0%, #2d8df4 100%);
-  color: #fff;
-  box-shadow: 0 14px 32px rgba(31, 123, 230, 0.22);
+  padding: 0 4px 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
-.esignature-topbar-copy {
+.esig-rail-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.esig-new-btn {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.esignature-eyebrow {
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: #fff;
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  opacity: 0.9;
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.esignature-topbar h1 {
+.esig-new-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+/* Nav */
+.esig-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.esig-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-soft), color var(--transition-soft);
+}
+
+.esig-nav-item:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.esig-nav-item.active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.esig-nav-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.esig-nav-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.esig-nav-item.active .esig-nav-badge {
+  background: var(--color-primary-soft);
+}
+
+/* Rail signature */
+.esig-rail-sign {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.esig-sign-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.esig-sign-img {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle);
+  object-fit: contain;
+  max-height: 72px;
+}
+
+.esig-sign-empty {
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+/* ── Body ────────────────────────────────────────────────── */
+.esig-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Error banner */
+.esig-error {
+  padding: 10px 24px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+  border-bottom: 1px solid #fecaca;
+  flex-shrink: 0;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.esig-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+  min-height: 64px;
+}
+
+.esig-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.esig-back-btn {
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: background var(--transition-soft), color var(--transition-soft);
+  flex-shrink: 0;
+}
+
+.esig-back-btn:hover {
+  background: #f1f5f9;
+  color: var(--color-text);
+}
+
+.esig-page-title {
   margin: 0;
-  font-size: 26px;
+  font-size: 18px;
   font-weight: 800;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.esignature-topbar p {
-  margin: 0;
-  font-size: 14px;
-  opacity: 0.92;
+.esig-page-hint {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
-.esignature-top-actions {
+.esig-detail-title-row {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.esignature-top-actions .btn-create {
-  background: #fff;
-  color: #1f7be6;
-}
-
-.esignature-top-actions .btn-create:hover {
-  background: #eef6ff;
-}
-
-.esignature-top-actions .btn-designated {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-}
-
-.esignature-top-actions .btn-designated:hover {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.esignature-workbench {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 340px;
-  gap: 18px;
-}
-
-.esignature-rail,
-.esignature-main,
-.esignature-panel {
-  min-height: 0;
-  border-radius: 22px;
-  overflow: hidden;
-  box-shadow: 0 14px 36px rgba(24, 53, 88, 0.08);
-}
-
-.esignature-rail,
-.esignature-panel {
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
-}
-
-.esignature-rail {
-  display: flex;
-  flex-direction: column;
-  padding: 18px;
-  gap: 16px;
-}
-
-.esignature-rail-card {
-  border-radius: 18px;
-  padding: 18px;
-  background: linear-gradient(180deg, #f4f8ff 0%, #eaf3ff 100%);
-  border: 1px solid rgba(31, 123, 230, 0.12);
-}
-
-.esignature-rail-card--primary {
-  background: linear-gradient(180deg, #1f7be6 0%, #2d8df4 100%);
-  color: #fff;
-  box-shadow: 0 10px 24px rgba(31, 123, 230, 0.22);
-}
-
-.esignature-rail-title {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: inherit;
-}
-
-.esignature-rail-desc {
-  margin: 0 0 14px;
+.esig-detail-meta {
+  margin: 4px 0 0;
   font-size: 12px;
-  line-height: 1.5;
-  color: inherit;
-  opacity: 0.86;
+  color: var(--color-text-muted);
 }
 
-.esignature-rail-card .btn-create {
-  width: 100%;
-  justify-content: center;
-}
-
-.esignature-rail-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.esignature-rail-menu-item {
-  width: 100%;
+.esig-header-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border: none;
-  border-radius: 14px;
-  background: transparent;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: var(--transition-soft);
-  text-align: left;
-}
-
-.esignature-rail-menu-item:hover {
-  background: rgba(31, 123, 230, 0.08);
-}
-
-.esignature-rail-menu-item.active {
-  background: rgba(31, 123, 230, 0.12);
-  color: #1f7be6;
-  font-weight: 700;
-}
-
-.esignature-rail-menu-item-main {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.esignature-rail-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 8px;
-  border-radius: 9999px;
-  background: #eaf3ff;
-  color: #1f7be6;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.esignature-approval-feed {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 0;
-}
-
-.esignature-section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  margin-top: 4px;
+  flex-shrink: 0;
 }
 
-.esignature-section-head h2 {
-  margin: 0;
-  font-size: 15px;
-  color: #20324f;
-}
-
-.esignature-section-head span {
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.esignature-feed-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  overflow: auto;
-  padding-right: 2px;
-}
-
-.esignature-feed-item {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid rgba(15, 35, 52, 0.08);
-  border-radius: 16px;
-  background: #fff;
+/* ── Buttons ─────────────────────────────────────────────── */
+.esig-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: var(--transition-soft);
+  transition: all 0.15s;
+  white-space: nowrap;
+  text-decoration: none;
+  font-family: inherit;
 }
 
-.esignature-feed-item:hover {
-  transform: translateY(-1px);
-  border-color: rgba(31, 123, 230, 0.22);
-  box-shadow: 0 10px 24px rgba(31, 123, 230, 0.08);
+.esig-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.esignature-feed-item.active {
-  border-color: rgba(31, 123, 230, 0.3);
-  box-shadow: 0 10px 24px rgba(31, 123, 230, 0.12);
+.esig-btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
 }
 
-.esignature-feed-item-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+.esig-btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
-.esignature-feed-item-title {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+.esig-btn-ghost {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: #e2e8f0;
 }
 
-.esignature-feed-item-title strong {
-  color: #20324f;
-  font-size: 14px;
+.esig-btn-ghost:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+  border-color: #cbd5e1;
 }
 
-.esignature-feed-item-title span {
-  color: var(--color-text-muted);
+.esig-btn-danger {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+.esig-btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.esig-text-btn {
+  border: none;
+  background: none;
+  color: var(--color-primary);
   font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: color var(--transition-soft);
 }
 
-.esignature-status-chip {
+.esig-text-btn:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.esig-text-btn-danger {
+  color: #ef4444;
+}
+
+.esig-text-btn-danger:hover {
+  color: #dc2626;
+}
+
+.esig-text-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.esig-icon-btn {
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
-  border-radius: 9999px;
-  color: #fff;
+  transition: color 0.12s, background 0.12s;
+  font-family: inherit;
+}
+
+.esig-icon-btn:hover {
+  color: var(--color-text);
+  background: #f1f5f9;
+}
+
+.esig-icon-btn.esig-icon-btn-danger:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+.esig-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Search bar ──────────────────────────────────────────── */
+.esig-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  min-width: 200px;
+}
+
+.esig-search-bar input {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--color-text);
+  font-family: inherit;
+}
+
+.esig-search-bar button {
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Count badge */
+.esig-count-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
 }
 
-.esignature-feed-meta {
-  display: flex;
+/* Status chip */
+.esig-status-chip {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.esig-status-chip-sm {
+  padding: 3px 8px;
+  font-size: 10px;
+}
+
+/* ── List / Table view ───────────────────────────────────── */
+.esig-table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+
+.esig-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.esig-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 11px 16px;
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: left;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.esig-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.esig-table tbody tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.esig-table tbody tr:hover {
+  background: var(--color-surface-muted);
+}
+
+.esig-table tbody tr.active {
+  background: var(--color-primary-soft);
+}
+
+.esig-table-title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.esig-table-title strong {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.esig-table-title span {
   font-size: 12px;
   color: var(--color-text-muted);
 }
 
-.esignature-main {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(15, 35, 52, 0.06);
+.esig-table-id {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.esignature-main-toolbar {
+/* Empty */
+.esig-empty {
+  height: 100%;
+  min-height: 300px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
-  padding: 18px 22px;
-  border-bottom: 1px solid rgba(15, 35, 52, 0.06);
+  color: #cbd5e1;
 }
 
-.esignature-main-toolbar-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.esignature-main-toolbar-copy h2 {
+.esig-empty p {
   margin: 0;
-  font-size: 22px;
-  color: #20324f;
+  font-size: 14px;
 }
 
-.esignature-main-toolbar-copy p {
+.esig-empty-hint {
   margin: 0;
   font-size: 13px;
   color: var(--color-text-muted);
 }
 
-.esignature-main-toolbar-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.esignature-main-scroll {
+/* ── Detail view ─────────────────────────────────────────── */
+.esig-detail {
   flex: 1;
   min-height: 0;
-  overflow: auto;
-  padding: 22px;
-}
-
-.esignature-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
-  gap: 18px;
-  min-height: 100%;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  overflow: hidden;
 }
 
-.esignature-card {
+.esig-detail-main {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 28px 28px 40px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 18px;
-  border-radius: 20px;
-  border: 1px solid rgba(15, 35, 52, 0.08);
-  background: #fff;
+  gap: 20px;
+  background: var(--color-bg);
 }
 
-.esignature-card-title {
+.esig-detail-side {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--color-border-subtle);
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+/* ── Section card wrapper ─────────────────────────────────── */
+.esig-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+
+.esig-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  padding: 13px 18px;
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-border-subtle);
+  border-radius: 12px 12px 0 0;
+}
+
+.esig-card-head-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.esig-card-body {
+  padding: 18px;
+}
+
+/* ── Status banner ────────────────────────────────────────── */
+.esig-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+
+.esig-status-banner-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.esig-status-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.esig-status-banner-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.esig-status-banner-sub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Attachment viewer ───────────────────────────────────── */
+.esig-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+  background: linear-gradient(to right, var(--color-surface-muted), var(--color-surface));
+}
+
+.esig-viewer-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.esig-viewer-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.esig-viewer-state p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.esig-viewer-state span {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.esig-viewer-state--error {
+  color: #dc2626;
+}
+
+.esig-viewer-frame {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.esig-viewer-image-wrap {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--color-surface-muted);
+}
+
+.esig-viewer-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft-md);
+}
+
+.esig-viewer-docx {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  background: #fff;
+}
+
+.esig-viewer-docx .esig-docx-rendered {
+  max-width: 100%;
+}
+
+.esig-viewer-txt {
+  margin: 0;
+  font-family: 'Consolas', 'D2Coding', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.esig-viewer-excel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.esig-viewer-excel-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-border-subtle);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.esig-viewer-excel-tab {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background var(--transition-soft), color var(--transition-soft);
+}
+
+.esig-viewer-excel-tab:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.esig-viewer-excel-tab.active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.esig-viewer-table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+
+.esig-viewer-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.esig-viewer-table th,
+.esig-viewer-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-subtle);
+  white-space: nowrap;
+  color: var(--color-text);
+}
+
+.esig-viewer-table th {
+  background: var(--color-surface-muted);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* ── Compose view ────────────────────────────────────────── */
+.esig-compose {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  overflow: hidden;
+}
+
+.esig-compose-form {
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.esig-compose-panel {
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border-left: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-muted);
+}
+
+/* ── Sections ────────────────────────────────────────────── */
+.esig-section {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
-.esignature-card-title h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #20324f;
-}
-
-.esignature-card-title span {
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.esignature-form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.esignature-form-group {
+.esig-section-header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 
-.esignature-form-group.full {
+.esig-section-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── Form ────────────────────────────────────────────────── */
+.esig-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.esig-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.esig-field-full {
   grid-column: 1 / -1;
 }
 
-.esignature-form-group label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #20324f;
-}
-
-.esignature-form-group input,
-.esignature-form-group textarea,
-.esignature-form-group select {
-  width: 100%;
-  padding: 13px 14px;
-  border: 1px solid rgba(15, 35, 52, 0.1);
-  border-radius: 14px;
-  background: #f8fbff;
-  color: var(--color-text);
-  outline: none;
-  transition: var(--transition-soft);
-}
-
-.esignature-form-group input:focus,
-.esignature-form-group textarea:focus,
-.esignature-form-group select:focus {
-  background: #fff;
-  border-color: rgba(31, 123, 230, 0.45);
-  box-shadow: 0 0 0 4px rgba(31, 123, 230, 0.1);
-}
-
-.esignature-form-group textarea {
-  min-height: 130px;
-  resize: vertical;
-}
-
-.esignature-document-preview {
+.esig-field-stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.esignature-document-sheet {
-  min-height: 560px;
-  border-radius: 18px;
-  border: 1px solid rgba(15, 35, 52, 0.1);
-  background:
-    linear-gradient(180deg, #fff 0%, #fff 100%),
-    repeating-linear-gradient(
-      180deg,
-      rgba(31, 123, 230, 0.04) 0,
-      rgba(31, 123, 230, 0.04) 1px,
-      transparent 1px,
-      transparent 48px
-    );
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
-  overflow: hidden;
-}
-
-.esignature-document-sheet-inner {
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.esignature-document-topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
-.esignature-document-topline strong {
-  font-size: 20px;
-  color: #20324f;
+.esig-field label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
-.esignature-document-topline span {
+.esig-field input,
+.esig-field select,
+.esig-field textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.esig-field input:focus,
+.esig-field select:focus,
+.esig-field textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus-glow);
+}
+
+.esig-field input[readonly] {
+  background: var(--color-surface-muted);
   color: var(--color-text-muted);
 }
 
-.esignature-document-block {
-  border: 1px solid rgba(15, 35, 52, 0.08);
-  border-radius: 16px;
-  overflow: hidden;
+.esig-field textarea {
+  min-height: 90px;
+  resize: vertical;
 }
 
-.esignature-document-block-header {
-  padding: 12px 14px;
-  background: #f8fbff;
-  border-bottom: 1px solid rgba(15, 35, 52, 0.08);
+.esig-textarea-lg {
+  min-height: 160px !important;
+}
+
+.esig-file-name {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+}
+
+/* ── User list ───────────────────────────────────────────── */
+.esig-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.esig-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-subtle);
+  transition: border-color 0.12s;
+}
+
+.esig-user-row:hover {
+  border-color: var(--color-primary-soft);
+}
+
+.esig-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.esig-user-info strong {
   font-size: 13px;
-  font-weight: 700;
-  color: #20324f;
+  color: var(--color-text);
+  font-weight: 600;
 }
 
-.esignature-document-block-body {
-  padding: 14px;
+.esig-user-info span {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.esig-add-btn {
+  border: none;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition-soft), color var(--transition-soft);
+  font-family: inherit;
+}
+
+.esig-add-btn:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.esig-add-btn.added {
+  background: #f0fdf4;
+  color: #16a34a;
+  cursor: default;
+}
+
+/* ── Approval line ───────────────────────────────────────── */
+.esig-line-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.esig-line-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.esig-line-order {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.esig-line-row select {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 6px;
+  background: var(--color-surface);
+  font-size: 12px;
+  color: var(--color-text);
+  outline: none;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+/* ── Presets ─────────────────────────────────────────────── */
+.esig-preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.esig-preset-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.esig-preset-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Document sheet ──────────────────────────────────────── */
+.esig-doc-sheet {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+
+.esig-doc-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(to right, var(--color-surface-muted), var(--color-surface));
+  border-bottom: 1px solid var(--color-border-subtle);
+  border-radius: 12px 12px 0 0;
+}
+
+.esig-doc-sheet-header strong {
   font-size: 14px;
-  line-height: 1.75;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.esig-doc-sheet-header span {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.esig-doc-block {
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.esig-doc-block:last-child {
+  border-bottom: none;
+}
+
+.esig-doc-block-label {
+  padding: 8px 20px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.esig-doc-block-body {
+  padding: 16px 20px;
+  font-size: 14px;
+  line-height: 1.8;
   color: var(--color-text);
   white-space: pre-wrap;
 }
 
-.esignature-document-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.esignature-document-table th,
-.esignature-document-table td {
-  border: 1px solid rgba(15, 35, 52, 0.08);
-  padding: 10px 12px;
-  text-align: left;
-}
-
-.esignature-document-table th {
-  background: #f8fbff;
-  color: #20324f;
-  font-weight: 700;
-}
-
-.esignature-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.esignature-actions .btn-create,
-.esignature-actions .btn-designated {
-  min-width: 120px;
-  justify-content: center;
-}
-
-.esignature-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.esignature-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px;
-}
-
-.esignature-panel-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 18px;
-  background: #fff;
-  border: 1px solid rgba(15, 35, 52, 0.08);
-}
-
-.esignature-panel-card h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #20324f;
-}
-
-.esignature-panel-subtitle {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.esignature-approver-search {
-  display: flex;
+/* Info grid */
+.esig-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
-.esignature-approver-search input {
-  flex: 1;
-  min-width: 0;
+.esig-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   padding: 12px 14px;
-  border: 1px solid rgba(15, 35, 52, 0.1);
-  border-radius: 14px;
-  background: #f8fbff;
+  border-radius: 10px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-subtle);
+  transition: border-color .12s;
 }
 
-.esignature-approver-search button,
-.esignature-panel-action {
-  border: none;
-  border-radius: 14px;
-  background: #eaf3ff;
-  color: #1f7be6;
-  padding: 12px 14px;
-  cursor: pointer;
+.esig-info-item:hover {
+  border-color: var(--color-primary-soft);
+}
+
+.esig-info-label {
+  font-size: 10px;
   font-weight: 700;
-}
-
-.esignature-approver-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 280px;
-  overflow: auto;
-}
-
-.esignature-approver-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #f8fbff;
-  border: 1px solid rgba(15, 35, 52, 0.06);
-}
-
-.esignature-approver-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.esignature-approver-info strong {
-  font-size: 14px;
-  color: #20324f;
-}
-
-.esignature-approver-info span {
-  font-size: 12px;
   color: var(--color-text-muted);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
-.esignature-attachment-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.esignature-attachment-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #f8fbff;
-  border: 1px solid rgba(15, 35, 52, 0.06);
+.esig-info-value {
   font-size: 13px;
+  color: var(--color-text);
+  font-weight: 600;
+  line-height: 1.4;
 }
 
-.esignature-attachment-item span {
-  color: var(--color-text-muted);
-}
-
-.esignature-empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 240px;
-  border-radius: 18px;
-  border: 1px dashed rgba(31, 123, 230, 0.18);
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--color-text-muted);
-  font-size: 14px;
-}
-
-.esignature-detail-header {
+/* ── Timeline ────────────────────────────────────────────── */
+.esig-timeline {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  position: relative;
 }
 
-.esignature-detail-header-top {
+.esig-timeline-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 0;
+  position: relative;
 }
 
-.esignature-detail-header h2 {
-  margin: 0;
-  font-size: 26px;
-  color: #20324f;
+.esig-timeline-item:not(:last-child) {
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
-.esignature-detail-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
-.esignature-detail-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-  gap: 18px;
-}
-
-.esignature-timeline {
+.esig-timeline-track {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  padding-top: 3px;
+  flex-shrink: 0;
+  gap: 0;
 }
 
-.esignature-timeline-item {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #f8fbff;
-  border: 1px solid rgba(15, 35, 52, 0.06);
-}
-
-.esignature-timeline-dot {
+.esig-timeline-dot {
   width: 12px;
   height: 12px;
-  border-radius: 9999px;
-  margin-top: 3px;
-  background: #1f7be6;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px currentColor;
   flex-shrink: 0;
 }
 
-.esignature-timeline-item h4 {
-  margin: 0;
-  font-size: 14px;
-  color: #20324f;
+.esig-timeline-content {
+  flex: 1;
+  min-width: 0;
 }
 
-.esignature-timeline-item p {
-  margin: 4px 0 0;
+.esig-timeline-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.esig-timeline-name .esig-timeline-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.esig-timeline-detail {
+  margin: 5px 0 0;
+  font-size: 12px;
   color: var(--color-text-muted);
   line-height: 1.6;
 }
 
-@media (max-width: 1400px) {
-  .esignature-workbench {
-    grid-template-columns: 290px minmax(0, 1fr);
+/* ── Signature ───────────────────────────────────────────── */
+.esig-sign-full {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle);
+  object-fit: contain;
+  max-height: 100px;
+}
+
+.esig-sign-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.esig-sign-upload input[type="file"] {
+  font-size: 12px;
+}
+
+/* ── Nav extras ─────────────────────────────────────────── */
+.esig-nav-divider {
+  height: 1px;
+  background: var(--color-border-subtle);
+  margin: 6px 4px;
+}
+
+.esig-nav-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* ── Signature management page ───────────────────────────── */
+.esig-sign-page {
+  flex: 1;
+  overflow: auto;
+  padding: 32px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.esig-sign-page-card {
+  width: 100%;
+  max-width: 700px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.esig-sign-page-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.esig-sign-page-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.esig-sign-page-img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-muted);
+  padding: 16px;
+}
+
+.esig-sign-page-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 180px;
+  border: 2px dashed var(--color-border-subtle);
+  border-radius: 10px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 20px;
+}
+
+.esig-sign-page-empty p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.esig-sign-page-empty span {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+.esig-sign-page-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.esig-sign-page-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.esig-sign-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 120px;
+  border: 2px dashed var(--color-border-subtle);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color var(--transition-soft), background var(--transition-soft);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+
+.esig-sign-upload-zone:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.esig-sign-upload-zone input[type="file"] {
+  display: none;
+}
+
+.esig-sign-page-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.esig-btn-ghost--danger {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.esig-btn-ghost--danger:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+
+.esig-doc-block-body--empty {
+  color: var(--color-text-muted);
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 1280px) {
+  .esig-compose {
+    grid-template-columns: 1fr;
   }
 
-  .esignature-panel {
-    grid-column: 1 / -1;
+  .esig-compose-panel {
+    border-left: none;
+    border-top: 1px solid var(--color-border-subtle);
+    max-height: 480px;
   }
 }
 
-@media (max-width: 1100px) {
-  .esignature-workbench {
+@media (max-width: 960px) {
+  .esig-detail {
     grid-template-columns: 1fr;
   }
 
-  .esignature-layout,
-  .esignature-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .esignature-shell {
-    padding: 14px;
+  .esig-detail-side {
+    border-left: none;
+    border-top: 1px solid var(--color-border-subtle);
+    min-height: 360px;
   }
 }
 
-@media (max-width: 768px) {
-  .esignature-topbar {
-    align-items: flex-start;
-    flex-direction: column;
+@media (max-width: 900px) {
+  .esig-rail {
+    width: 180px;
   }
 
-  .esignature-topbar h1 {
-    font-size: 22px;
-  }
-
-  .esignature-main-toolbar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .esignature-form-grid {
+  .esig-grid {
     grid-template-columns: 1fr;
+  }
+
+  .esig-field-full {
+    grid-column: 1;
+  }
+
+  .esig-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .esig {
+    flex-direction: column;
+  }
+
+  .esig-rail {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 6px;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  .esig-rail-header,
+  .esig-rail-sign {
+    display: none;
+  }
+
+  .esig-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .esig-nav-item {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .esig-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 16px;
+  }
+
+  .esig-header-actions {
+    flex-wrap: wrap;
   }
 }
