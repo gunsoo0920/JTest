@@ -7,6 +7,7 @@ import {
   FiCheck,
   FiCheckSquare,
   FiClock,
+  FiDownload,
   FiEdit3,
   FiFileText,
   FiImage,
@@ -346,6 +347,143 @@ function HwpxViewer({ data }) {
   )
 }
 
+function ActionModal({ type, users, onConfirm, onClose }) {
+  const [comment, setComment] = useState('')
+  const [reason, setReason] = useState('')
+  const [delegateSearch, setDelegateSearch] = useState('')
+  const [delegateTarget, setDelegateTarget] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  const filtered = delegateSearch.trim()
+    ? users.filter((u) =>
+        normalizeText(u.name).includes(normalizeText(delegateSearch)) ||
+        normalizeText(u.empNo).includes(normalizeText(delegateSearch))
+      ).slice(0, 8)
+    : []
+
+  const handleSubmit = async () => {
+    if (type === 'reject' && !reason.trim()) return
+    if (type === 'delegate' && !delegateTarget) return
+    setLoading(true)
+    try {
+      await onConfirm({
+        comment: comment.trim(),
+        reason: reason.trim(),
+        delegateeId: delegateTarget?.id,
+        delegateeName: delegateTarget?.name,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const META = {
+    approve: { title: '승인', color: '#16a34a', confirmLabel: '승인하기' },
+    reject:  { title: '반려', color: '#dc2626', confirmLabel: '반려하기' },
+    delegate: { title: '대리결재', color: '#7c3aed', confirmLabel: '대리결재 지정' },
+  }
+  const meta = META[type]
+
+  return (
+    <div className="esig-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="esig-modal">
+        <div className="esig-modal-header" style={{ borderColor: meta.color }}>
+          <h3 className="esig-modal-title" style={{ color: meta.color }}>{meta.title}</h3>
+          <button className="esig-icon-btn" onClick={onClose}><FiX size={18} /></button>
+        </div>
+
+        <div className="esig-modal-body">
+          {type === 'approve' && (
+            <div className="esig-field">
+              <label>승인 의견 <span className="esig-modal-optional">(선택)</span></label>
+              <textarea
+                className="esig-modal-textarea"
+                placeholder="승인 의견을 입력하세요."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={4}
+                autoFocus
+              />
+            </div>
+          )}
+
+          {type === 'reject' && (
+            <div className="esig-field">
+              <label>반려 사유 <span className="esig-modal-required">*</span></label>
+              <textarea
+                className="esig-modal-textarea"
+                placeholder="반려 사유를 입력하세요."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={4}
+                autoFocus
+              />
+            </div>
+          )}
+
+          {type === 'delegate' && (
+            <>
+              <div className="esig-field">
+                <label>대리결재자 검색 <span className="esig-modal-required">*</span></label>
+                <input
+                  type="text"
+                  placeholder="이름 또는 사번 입력"
+                  value={delegateSearch}
+                  onChange={(e) => { setDelegateSearch(e.target.value); setDelegateTarget(null) }}
+                  autoFocus
+                />
+                {filtered.length > 0 && !delegateTarget && (
+                  <div className="esig-modal-user-list">
+                    {filtered.map((u) => (
+                      <button
+                        key={u.id}
+                        className="esig-modal-user-row"
+                        onClick={() => { setDelegateTarget(u); setDelegateSearch(u.name) }}
+                      >
+                        <strong>{u.name}</strong>
+                        <span>{u.position || ''} · {u.empNo}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {delegateTarget && (
+                  <div className="esig-modal-selected">
+                    <FiCheck size={13} style={{ color: '#16a34a' }} />
+                    <span>{delegateTarget.name} {delegateTarget.position || ''}</span>
+                    <button className="esig-icon-btn" onClick={() => { setDelegateTarget(null); setDelegateSearch('') }}><FiX size={12} /></button>
+                  </div>
+                )}
+              </div>
+              <div className="esig-field">
+                <label>대리결재 사유 <span className="esig-modal-optional">(선택)</span></label>
+                <textarea
+                  className="esig-modal-textarea"
+                  placeholder="대리결재 사유를 입력하세요."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="esig-modal-footer">
+          <button className="esig-btn esig-btn-ghost" onClick={onClose} disabled={loading}>취소</button>
+          <button
+            className="esig-btn esig-btn-primary"
+            style={{ background: meta.color, borderColor: meta.color }}
+            onClick={handleSubmit}
+            disabled={loading || (type === 'reject' && !reason.trim()) || (type === 'delegate' && !delegateTarget)}
+          >
+            {loading ? '처리 중...' : meta.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ESignature({ currentSubPage, me, onSubPageChange }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -369,6 +507,7 @@ export default function ESignature({ currentSubPage, me, onSubPageChange }) {
   const [linePresetSaving, setLinePresetSaving] = useState(false)
   const [signSaving, setSignSaving] = useState(false)
   const [actionState, setActionState] = useState('')
+  const [actionModal, setActionModal] = useState(null) // 'approve' | 'reject' | 'delegate' | null
 
   const currentFolder = FOLDER_META[currentSubPage] || FOLDER_META['esignature-waiting']
   const selectedTemplate = useMemo(
@@ -625,48 +764,31 @@ export default function ESignature({ currentSubPage, me, onSubPageChange }) {
     } finally { setSaveState('idle') }
   }
 
-  const handleApprove = async () => {
-    if (!selectedApproval) return
-    const comment = window.prompt('승인 의견을 입력해주세요. (선택)')
-    setActionState('approve')
-    try {
-      await approveApprovalDoc(selectedApproval.id, { comment: comment || '' })
-      setSelectedApproval(await loadApprovalDetail(selectedApproval.id))
-      await refreshAll()
-      alert('승인 처리되었습니다.')
-    } catch (e) { console.error(e); alert(e.response?.data?.message || '승인 처리에 실패했습니다.') }
-    finally { setActionState('') }
-  }
+  const handleApprove = () => setActionModal('approve')
+  const handleReject = () => setActionModal('reject')
+  const handleDelegate = () => setActionModal('delegate')
 
-  const handleReject = async () => {
+  const handleActionConfirm = async ({ comment, reason, delegateeId, delegateeName }) => {
     if (!selectedApproval) return
-    const reason = window.prompt('반려 사유를 입력해주세요.')
-    if (!reason) return
-    setActionState('reject')
+    const type = actionModal
+    setActionState(type)
     try {
-      await rejectApprovalDoc(selectedApproval.id, { reason })
+      if (type === 'approve') {
+        await approveApprovalDoc(selectedApproval.id, { comment })
+      } else if (type === 'reject') {
+        await rejectApprovalDoc(selectedApproval.id, { reason })
+      } else if (type === 'delegate') {
+        await delegateApprovalDoc(selectedApproval.id, { delegateeId, comment })
+      }
       setSelectedApproval(await loadApprovalDetail(selectedApproval.id))
       await refreshAll()
-      alert('반려 처리되었습니다.')
-    } catch (e) { console.error(e); alert(e.response?.data?.message || '반려 처리에 실패했습니다.') }
-    finally { setActionState('') }
-  }
-
-  const handleDelegate = async () => {
-    if (!selectedApproval) return
-    const query = window.prompt('대리결재할 직원의 이름 또는 사번을 입력해주세요.')
-    if (!query) return
-    const target = users.find((u) => normalizeText(u.name).includes(normalizeText(query)) || normalizeText(u.empNo).includes(normalizeText(query)))
-    if (!target) { alert('대리결재자를 찾지 못했습니다.'); return }
-    const comment = window.prompt('대리결재 사유를 입력해주세요. (선택)')
-    setActionState('delegate')
-    try {
-      await delegateApprovalDoc(selectedApproval.id, { delegateeId: target.id, comment: comment || '' })
-      setSelectedApproval(await loadApprovalDetail(selectedApproval.id))
-      await refreshAll()
-      alert(`${target.name}님에게 대리결재 요청을 보냈습니다.`)
-    } catch (e) { console.error(e); alert(e.response?.data?.message || '대리결재 요청에 실패했습니다.') }
-    finally { setActionState('') }
+      setActionModal(null)
+    } catch (e) {
+      console.error(e)
+      alert(e.response?.data?.message || '처리에 실패했습니다.')
+    } finally {
+      setActionState('')
+    }
   }
 
   const handleSignUpload = async () => {
@@ -716,6 +838,14 @@ export default function ESignature({ currentSubPage, me, onSubPageChange }) {
 
   return (
     <div className="esig">
+      {actionModal && (
+        <ActionModal
+          type={actionModal}
+          users={users}
+          onConfirm={handleActionConfirm}
+          onClose={() => setActionModal(null)}
+        />
+      )}
       {/* Left Rail */}
       <aside className="esig-rail">
         <div className="esig-rail-header">
@@ -1160,14 +1290,27 @@ export default function ESignature({ currentSubPage, me, onSubPageChange }) {
                 <div className="esig-viewer-header">
                   <h2 className="esig-section-title">첨부파일</h2>
                   {selectedApproval.attachmentUrl && (
-                    <a
-                      className="esig-text-btn"
-                      href={selectedApproval.attachmentUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      className="esig-btn esig-btn-ghost"
+                      style={{ padding: '6px 12px', fontSize: '12px' }}
+                      onClick={async () => {
+                        try {
+                          const res = await getApprovalAttachment(selectedApproval.id)
+                          const blob = new Blob([res.data], { type: res.headers['content-type'] || 'application/octet-stream' })
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          const raw = selectedApproval.attachmentUrl
+                          a.download = raw.split('/').pop().split('?')[0] || '첨부파일'
+                          a.click()
+                          URL.revokeObjectURL(url)
+                        } catch {
+                          alert('파일 다운로드에 실패했습니다.')
+                        }
+                      }}
                     >
-                      새 탭으로 열기
-                    </a>
+                      <FiDownload size={13} /> 다운로드
+                    </button>
                   )}
                 </div>
                 <div className="esig-viewer-body">
