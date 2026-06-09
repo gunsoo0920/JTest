@@ -16,7 +16,7 @@ import {
   isImageDocument,
 } from '../../utils/documentFileUtils'
 import DocumentFilePreview from './DocumentFilePreview'
-import { FiCheck, FiChevronRight, FiEdit3, FiPlus, FiX } from 'react-icons/fi'
+import { FiCheck, FiChevronRight, FiEdit3, FiX } from 'react-icons/fi'
 import { useAiGeneration } from '../../contexts/useAiGeneration'
 // use backend download endpoint instead of frontend export logic
 

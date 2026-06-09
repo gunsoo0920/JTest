@@ -602,7 +602,7 @@
 .search-with-filter {
     display: flex;
     gap: 8px;
-    padding: var(--space-md);
+    padding: 10px var(--space-md) var(--space-md);
     background-color: transparent;
 }
 
