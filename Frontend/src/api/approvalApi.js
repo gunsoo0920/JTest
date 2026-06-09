@@ -47,7 +47,6 @@ export const getApprovalAttachments = (id) =>
 
 export const getApprovalAttachmentById = (docId, attachmentId) =>
   api.get(`/approvals/documents/${docId}/attachments/${attachmentId}`, { responseType: 'arraybuffer' })
-
 export const downloadApprovalPdf = (id) =>
   api.get(`/approvals/documents/${id}/pdf/download`, { responseType: 'arraybuffer' })
 
