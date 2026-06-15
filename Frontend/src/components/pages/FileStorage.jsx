@@ -33,6 +33,13 @@ import { formatDate, formatDateTime } from '../../utils/dateUtils';
 import { formatFileSize, getBaseName, getExtension } from '../../utils/fileUtils';
 import FilePreviewModal from '../file/FilePreviewModal';
 
+const FILE_TABS = new Set(['my', 'shared', 'important', 'template', 'trash', 'all']);
+
+const getFileTabFromPage = (page) => {
+  const tab = String(page || '').replace(/^file-/, '');
+  return FILE_TABS.has(tab) ? tab : 'my';
+};
+
 const getFileIcon = (doc) => {
   const kind = getDocumentPreviewKind(doc);
   const ext = doc.title?.split('.').pop()?.toLowerCase() || '';
@@ -51,10 +58,13 @@ const getFileIcon = (doc) => {
   }
 };
 
-export default function FileStorage() {
+export default function FileStorage({
+  currentSubPage = 'file-my',
+  onSubPageChange,
+}) {
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
-  const [activeTab, setActiveTab] = useState('my'); // 'my', 'shared', 'template', 'important', 'trash'
+  const activeTab = getFileTabFromPage(currentSubPage); // 'my', 'shared', 'template', 'important', 'trash'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocId, setSelectedDocId] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -298,9 +308,9 @@ export default function FileStorage() {
       className={`file-sidebar-item ${activeTab === id ? 'active' : ''}`}
       onClick={() => {
         if (activeTab !== id) {
-          setActiveTab(id);
           setSelectedDocId(null);
           setCurrentPage(0);
+          onSubPageChange?.(`file-${id}`);
         }
       }}
     >
